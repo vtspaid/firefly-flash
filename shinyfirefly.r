@@ -18,7 +18,13 @@ ui <- fluidPage(
                  numericInput("end", "plot end time", value = 38, min = 1, max = 10000)),
         tabPanel("Flash calculations",
                  numericInput("tstart", "start time", value = 8, min = 1, max = 10000),
-                 numericInput("tend", "end time", value = 38, min = 1, max = 10000))
+                 numericInput("tend", "end time", value = 38, min = 1, max = 10000),
+                 textInput("species", "species", value = "", width = NULL, placeholder = NULL),
+                 numericInput("sample", "sample #", value = 1, min=1, max = 100000),
+                 textInput("site", "site name", value = "", width = NULL, placeholder = NULL),
+                 numericInput("temp", "sample #", value = 1, min=1, max = 100000))
+        
+        
       )),
     
     # Main panel for displaying outputs ----
@@ -48,7 +54,8 @@ server <- function(input, output, output2) {
   })
   
   output$flash_stats <- renderTable({
-    singleflash(FLASH, start=input$tstart, end=input$tend, species="potomaca", sample=1, site="Dunkard", temp=65)})
+    singleflash(FLASH, start=input$tstart, end=input$tend, species=input$species, sample=input$sample, 
+                site=input$site, temp=input$temp)})
   
   
 }
