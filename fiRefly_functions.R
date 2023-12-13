@@ -2,22 +2,22 @@
 library(dplyr)
 
 singleflash <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.998,
-                        species="Sample", sample=1, site="unknown", temp=NA){
-  starting=start*wav@samp.rate+1 # converts seconds into the correct sample number (have to add 1 or default would be invalid)
-  ending=end*wav@samp.rate
+                        species="sample", sample=1, site="site", temp=NA){
+  starting=start*wav@samp.rate+1 # multiply the starting input by the sample rate to get starting frame
+  ending=end*wav@samp.rate # get ending frame
   amp<-wav@left[starting:ending] # creates a vector of amplitudes using provided start and end times
  
-   #create time array
+   #create time array by dividing the current frame by the sample rate and adding the initial start time
   timeArray <- ((0:(length(amp)-1)) / FLASH@samp.rate)+start
    
   #create dataframe of time and amplitude
-  timeamp  <-data.frame(Time=timeArray, Amp=amp)
+  timeamp <- data.frame(Time=timeArray, Amp=amp)
 
   # keep only amplitudes in the top 1%
-  timeamp <- timeamp[timeamp$Amp>quantile(timeamp$Amp, quant),]
+  timeamp <- timeamp[timeamp$Amp > quantile(timeamp$Amp, quant),]
   
   # get time difference between remaining high level amplitudes
-  timeamp$timediff <-c(0, diff(timeamp$Time))
+  timeamp$timediff <- c(0, diff(timeamp$Time))
   
   # create groups based on the difference in time. If the difference in time is less than .1 sec
   # then it will be placed in the same sound group.
@@ -25,7 +25,7 @@ singleflash <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=
     mutate(samepeak = replace(samepeak, is.na(samepeak), 1)) %>%
     mutate(grouping = cumsum(samepeak))
   
-  # find median Time of each sound grouping
+  # find median time of each sound grouping
   peak <- timeamp %>% group_by(grouping) %>% summarise(peakTime=median(Time))
   
   # find time difference in the peak times
