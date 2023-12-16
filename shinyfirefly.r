@@ -18,12 +18,12 @@ ui <- fluidPage(
                  numericInput("end", "plot end time", value = length(FLASH@left)/FLASH@samp.rate, min = 1, max = 42),
                   actionButton("AUDIO", "Play recording")),
         tabPanel("Flash calculations",
-                 numericInput("tstart", "start time", value = 8, min = 1, max = length(FLASH@left)/FLASH@samp.rate), # start time of recording to use
+                 numericInput("tstart", "start time", value = 0, min = 1, max = length(FLASH@left)/FLASH@samp.rate), # start time of recording to use
                  numericInput("tend", "end time", value = length(FLASH@left)/FLASH@samp.rate, min = 1, max = length(FLASH@left)/FLASH@samp.rate), # end time of recording to use
                  textInput("species", "species", value = "", width = NULL, placeholder = NULL), # set species
                  numericInput("sample", "sample #", value = 1, min=1, max = 100000), # set sample number
                  textInput("site", "site name", value = "", width = NULL, placeholder = NULL), # set site
-                 numericInput("temp", "Temperature", value = 1, min=1, max = 100000)) # set temp
+                 numericInput("temp", "Temperature", value = "", min=1, max = 100000)) # set temp
         
         
       )),
@@ -31,9 +31,19 @@ ui <- fluidPage(
     # Main panel for displaying outputs ----
     mainPanel( 
       # Output: Histogram ----
+      p("This plot is controlled by the 'plot times' tab on the left. It is purely for visulization of the audio"),
       plotOutput(outputId = "flashplot"),
 
-      tableOutput(outputId = "flash_stats") )
+      p("This is the output you get using the start and end times selected in the 'flash calculations' tab on the left.
+      You can supply the start and end times for the calculations, and the species, site and temperature in case you 
+      want to copy and paste the results into a spreadsheet"),
+      tableOutput(outputId = "flash_stats"),
+      
+      br(),
+      br(),
+      p("This plot is of the audio used in the flash calculations, the red lines are where the r function believes a 
+         flash occured"),
+      plotOutput(outputId = "resultsplot"))
       
     )
   
@@ -53,6 +63,9 @@ server <- function(input, output, output2, session) {
        col='black', xlab='Seconds', ylab='Amplitude', xlim=c(input$start, input$end))
     
   })
+  
+  output$resultsplot <- renderPlot({flashcheck(FLASH, start=input$tstart, end=input$tend)})
+  
   
   output$flash_stats <- renderTable({
     singleflash(FLASH, start=input$tstart, end=input$tend, species=input$species, sample=input$sample, 
