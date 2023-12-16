@@ -14,15 +14,16 @@ ui <- fluidPage(
     sidebarPanel(
       tabsetPanel(
         tabPanel("plot times",
-                 numericInput("start", "plot start time", value = 8, min = 1, max = 10000),
-                 numericInput("end", "plot end time", value = 38, min = 1, max = 10000)),
+                 numericInput("start", "plot start time", value = 0, min = 1, max = length(FLASH@left)/FLASH@samp.rate),
+                 numericInput("end", "plot end time", value = length(FLASH@left)/FLASH@samp.rate, min = 1, max = 42),
+                  actionButton("AUDIO", "Play recording")),
         tabPanel("Flash calculations",
-                 numericInput("tstart", "start time", value = 8, min = 1, max = 10000),
-                 numericInput("tend", "end time", value = 38, min = 1, max = 10000),
-                 textInput("species", "species", value = "", width = NULL, placeholder = NULL),
-                 numericInput("sample", "sample #", value = 1, min=1, max = 100000),
-                 textInput("site", "site name", value = "", width = NULL, placeholder = NULL),
-                 numericInput("temp", "sample #", value = 1, min=1, max = 100000))
+                 numericInput("tstart", "start time", value = 8, min = 1, max = length(FLASH@left)/FLASH@samp.rate), # start time of recording to use
+                 numericInput("tend", "end time", value = length(FLASH@left)/FLASH@samp.rate, min = 1, max = length(FLASH@left)/FLASH@samp.rate), # end time of recording to use
+                 textInput("species", "species", value = "", width = NULL, placeholder = NULL), # set species
+                 numericInput("sample", "sample #", value = 1, min=1, max = 100000), # set sample number
+                 textInput("site", "site name", value = "", width = NULL, placeholder = NULL), # set site
+                 numericInput("temp", "Temperature", value = 1, min=1, max = 100000)) # set temp
         
         
       )),
@@ -39,7 +40,7 @@ ui <- fluidPage(
 
 
 # Define server logic required to draw a histogram ----
-server <- function(input, output, output2) {
+server <- function(input, output, output2, session) {
  
   
   output$flashplot <- renderPlot({
@@ -57,7 +58,17 @@ server <- function(input, output, output2) {
     singleflash(FLASH, start=input$tstart, end=input$tend, species=input$species, sample=input$sample, 
                 site=input$site, temp=input$temp)})
   
-  
+
+observeEvent(input$AUDIO, {
+   insertUI(selector = "#AUDIO",
+            where = "afterEnd",
+           ui = play( Wave(FLASH@left[c(input$start*FLASH@samp.rate):c(input$end*FLASH@samp.rate)], 
+                           FLASH@right[c(input$start*FLASH@samp.rate):c(input$end*FLASH@samp.rate)],
+                           FLASH@samp.rate, bit = FLASH@bit, pcm = TRUE)))
+ })
+
 }
 
 shinyApp(ui = ui, server = server)
+
+tags$audio(src = "dunkard_potomaca.wav", type = "audio/wav", autoplay = NA, controls = NA)
