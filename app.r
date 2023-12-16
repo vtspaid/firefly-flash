@@ -99,7 +99,10 @@ ui <- fluidPage(
         tabPanel("plot times",
                  numericInput("start", "plot start time", value = 0, min = 1, max = length(FLASH@left)/FLASH@samp.rate),
                  numericInput("end", "plot end time", value = length(FLASH@left)/FLASH@samp.rate, min = 1, max = 42),
-                  actionButton("AUDIO", "Play recording")),
+                  #actionButton("AUDIO", "Play recording"),
+        actionButton("AUDIO2", "Play recording2")),
+
+      
         tabPanel("Flash calculations",
                  numericInput("tstart", "start time", value = 0, min = 1, max = length(FLASH@left)/FLASH@samp.rate), # start time of recording to use
                  numericInput("tend", "end time", value = length(FLASH@left)/FLASH@samp.rate, min = 1, max = length(FLASH@left)/FLASH@samp.rate), # end time of recording to use
@@ -110,6 +113,7 @@ ui <- fluidPage(
         
         
       )),
+  uiOutput('my_audio'),
     
     # Main panel for displaying outputs ----
     mainPanel( 
@@ -156,16 +160,26 @@ server <- function(input, output, output2, session) {
                 site=input$site, temp=input$temp)})
   
 
-observeEvent(input$AUDIO, {
-   insertUI(selector = "#AUDIO",
-            where = "afterEnd",
-           ui = play( Wave(FLASH@left[c(input$start*FLASH@samp.rate):c(input$end*FLASH@samp.rate)], 
-                           FLASH@right[c(input$start*FLASH@samp.rate):c(input$end*FLASH@samp.rate)],
-                           FLASH@samp.rate, bit = FLASH@bit, pcm = TRUE)))
- })
+# observeEvent(input$AUDIO, {
+#    insertUI(selector = "#AUDIO",
+#             where = "afterEnd",
+#            ui = play( Wave(FLASH@left[c(input$start*FLASH@samp.rate):c(input$end*FLASH@samp.rate)], 
+#                            FLASH@right[c(input$start*FLASH@samp.rate):c(input$end*FLASH@samp.rate)],
+#                            FLASH@samp.rate, bit = FLASH@bit, pcm = TRUE)))
+#  })
+
+observeEvent(input$AUDIO2, {
+  insertUI(selector = "#AUDIO2",
+           where = "afterEnd",
+           ui = tags$audio(src="testaudio.wav", type = "audio/wav", autoplay = NA,
+                           controls = NA))
+})
+
+  output$my_audio <- renderUI({tags$audio(src="testaudio.wav", type = "audio/wav", autoplay = NA,
+                                      controls = T)})
 
 }
 
 shinyApp(ui = ui, server = server)
 
-runApp()
+#runApp("app.r")
