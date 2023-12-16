@@ -24,6 +24,11 @@ plot(fft_data)
 pcm_data <- read_audio_bin(FLASH, channels = 1)
 plot(pcm_data, type = 'l')
 
+library(tuneR)
+# play audio
+play(FLASH)
+
+
 # experiment with down sampling. Standard sample rate is 1600 maybe, so you want to use something
 # lower than that to save space if thats your goal
 pcm_data <- read_audio_bin(FLASH, channels = 1, sample_rate = 16000)

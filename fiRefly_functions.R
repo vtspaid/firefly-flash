@@ -3,12 +3,12 @@ library(dplyr)
 
 singleflash <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.998,
                         species="sample", sample=1, site="site", temp=NA){
-  starting=start*wav@samp.rate+1 # multiply the starting input by the sample rate to get starting frame
+  starting=start*wav@samp.rate+.01 # multiply the starting input by the sample rate to get starting frame
   ending=end*wav@samp.rate # get ending frame
   amp<-wav@left[starting:ending] # creates a vector of amplitudes using provided start and end times
  
    #create time array by dividing the current frame by the sample rate and adding the initial start time
-  timeArray <- ((0:(length(amp)-1)) / FLASH@samp.rate)+start
+  timeArray <- ((0:(length(amp)-1)) / wav@samp.rate)+start
    
   #create dataframe of time and amplitude
   timeamp <- data.frame(Time=timeArray, Amp=amp)
@@ -48,7 +48,7 @@ flashcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0
   amp<-wav@left[starting:ending] # creates a vector of amplitudes using provided start and end times
   
   #create time array
-  timeArray <- ((0:(length(amp)-1)) / FLASH@samp.rate)+start
+  timeArray <- ((0:(length(amp)-1)) / wav@samp.rate)+start
   
   #create dataframe of time and amplitude
   timeamp  <-data.frame(Time=timeArray, Amp=amp)
