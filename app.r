@@ -1,7 +1,7 @@
 ### Code for creating shiny app that calculates statistics for firefly flashes ###
 
 #load necessary packages
-library(shiny)
+#library(shiny)
 library(tuneR)
 library(dplyr)
 library(base64enc)
@@ -88,7 +88,7 @@ flashcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0
   return(flashcheck)
 }
 
-######
+###### UI #####
 
 
 ui <- fluidPage(
@@ -100,25 +100,17 @@ ui <- fluidPage(
     sidebarPanel(
       tabsetPanel(
         tabPanel("plot times",
-                 # numericInput("start", "plot start time", value = 0, min = 1, max = length(FLASH@left)/FLASH@samp.rate),
-                 # numericInput("end", "plot end time", value = length(FLASH@left)/FLASH@samp.rate, min = 1, max = 42),
-                  numericInput("start", "plot start time", value = 0, min = 1, max = 30),
-                  numericInput("end", "plot end time", value = 30, min = 1, max = 60),
+                  # the next two lines are inputs for the xlim of the audio plot. The end gets updated later
+                  numericInput("start", "plot start time", value = 0, min = 0, max = 10000),
+                  numericInput("end", "plot end time", value = 10, min = 1, max = 10000),
                  
                   #actionButton("AUDIO", "Play recording"),
         actionButton("AUDIO2", "Play recording2")),
 
       
         tabPanel("Flash calculations",
-                 # numericInput("tstart", "start time", value = 0, min = 1, max = length(FLASH@left)/FLASH@samp.rate), # start time of recording to use
-                 # numericInput("tend", "end time", value = length(FLASH@left)/FLASH@samp.rate, min = 1, max = length(FLASH@left)/FLASH@samp.rate), # end time of recording to use
-                 # textInput("species", "species", value = "", width = NULL, placeholder = NULL), # set species
-                 # numericInput("sample", "sample #", value = 1, min=1, max = 100000), # set sample number
-                 # textInput("site", "site name", value = "", width = NULL, placeholder = NULL), # set site
-                 # numericInput("temp", "Temperature", value = "", min=1, max = 100000)) # set temp
-
                  numericInput("tstart", "start time", value = 1, min = 1, max = 30), # start time of recording to use
-                 numericInput("tend", "end time", value = 30, min = 1, max = 60), # end time of recording to use
+                 numericInput("tend", "end time", value = 10, min = 1, max = 10000), # end time of recording to use
                  numericInput("quant", "amplitude quantile", value=0.99, min=0.85, max=1, step = 0.001), # quantile to use for amplitude cutoff
                  textInput("species", "species", value = "", width = NULL, placeholder = NULL), # set species
                  numericInput("sample", "sample #", value = 1, min=1, max = 100000), # set sample number
@@ -126,8 +118,8 @@ ui <- fluidPage(
                  numericInput("temp", "Temperature", value = "", min=1, max = 100000), # set temp
                  # actionButton('deletetime', "remove noise"))
                  fluidRow(
-                   column(4, numericInput("rmstart1", "Remove noise", value="", min=0.1, max=1000)),
-                   column(4, numericInput("rmend1", "Remove noise2", value="", min=0.1, max=1000))
+                   column(4, numericInput("rmstart1", "Remove noise", value=0.01, min=0.1, max=1000)),
+                   column(4, numericInput("rmend1", "Remove noise2", value=0.01, min=0.1, max=1000))
                           )
                  )
 
@@ -156,56 +148,53 @@ ui <- fluidPage(
     )
   
 
-##### RUN SHINY APP #######
+##### SERVER #######
 
 # Define server logic required to draw a histogram ----
 server <- function(input, output, session) {
   
   
   FLASH <- reactive({
+    req(input$file1)
     infile <- input$file1
-    if (is.null(infile)) {
-      return(NULL)
-    }
+    # if (is.null(infile)) {
+    #   return(NULL)
+    # }
     audio <- readWave(infile$datapath)
     return(audio)
   }) 
-  
 
-  
-  output$flash_stats  <- renderTable({ 
-    df <- FLASH()
+  observeEvent(input$file1, {  updateNumericInput(session, "end",
+                                                        value = length(FLASH()@left)/FLASH()@samp.rate,
+                                                        max = length(FLASH()@left)/FLASH()@samp.rate)
+    updateNumericInput(session, "tend",
+                       value = length(FLASH()@left)/FLASH()@samp.rate,
+                       max = length(FLASH()@left)/FLASH()@samp.rate)
+  })
+
+  output$flash_stats  <- renderTable({
+    req(input$file1)
+    dfflash <- FLASH()
     samprate <- FLASH()@samp.rate
-    df@left[c(input$rmstart1*samprate):c(samprate*input$rmend1)] <- 0
-    singleflash(df,
+    dfflash@left[c(input$rmstart1*samprate):c(samprate*input$rmend1)] <- 0
+    singleflash(dfflash,
                 start=input$tstart, end=input$tend, species=input$species, sample=input$sample,
                site=input$site, temp=input$temp, quant=input$quant
                )
                                 })
 
 
-    
-
-  
-  # updateNumericInput(
-  #   session = getDefaultReactiveDomain(),
-  #   inputId,
-  #   label = NULL,
-  #   value = NULL,
-  #   min = NULL,
-  #   max = NULL,
-  #   step = NULL
-  # )
-  
   output$resultsplot <- renderPlot({
+    req(input$file1)
     df2 <- FLASH()
     samprate <- FLASH()@samp.rate
     df2@left[c(input$rmstart1*samprate):c(samprate*input$rmend1)] <- 0
   flashcheck(df2, start=input$tstart, end=input$tend, quant=input$quant)})
-  
-  
-  
+
+
+
   output$flashplot <- renderPlot({
+    req(input$file1)
   train_audio = FLASH()
   str(train_audio)
   s1 <- train_audio/2^(train_audio@bit -1)
@@ -213,30 +202,39 @@ server <- function(input, output, session) {
   #Plot the wave
   plot(x=timeArray, y=train_audio@left, type='l',
        col='black', xlab='Seconds', ylab='Amplitude', xlim=c(input$start, input$end))
-    
+
   })
 
-  
-  observeEvent( input$AUDIO2, {
-    
-    req( input$file1 )
-    
-    base64 <- dataURI(file = input$file1$datapath, mime = "audio/wav")
-    
-    insertUI( selector = "#AUDIO2", where = "afterEnd",
-              
-              ui = tags$audio( src = base64, type = "audio/wav", autoplay = NA, controls = NA )  
-    )
-    
-    # observeEvent(input$deletetime, { insertUI( selector = '#deletetime', where = "afterend",
-    #                                            ui = tagList(""))
-    #   
-    #})
-    
-  })
+
+observeEvent( input$AUDIO2, {
+
+  req( input$file1 )
+
+  base64 <- dataURI(file = input$file1$datapath, mime = "audio/wav")
+
+  insertUI( selector = "#AUDIO2", where = "afterEnd",
+
+            ui = tags$audio( src = base64, type = "audio/wav", autoplay = NA, controls = NA )
+  )
+
+ })
 
 }
 
+
 shinyApp(ui = ui, server = server)
 
-d#runApp("app.r")
+#runApp("app.r")
+
+
+# to deploy app
+#library(rsconnect)
+#deployApp()
+
+#todo
+# mp3 compatability
+# main panel with explanation and example and second panel with the interactive stuff
+# work on code for complex quick flashers, one function can work for all with number of flashes as an input
+# work on code for prolonged glows
+# play only specific sections of audio
+
