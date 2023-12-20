@@ -1,7 +1,7 @@
 ### Code for creating shiny app that calculates statistics for firefly flashes ###
 
 #load necessary packages
-#library(shiny)
+library(shiny)
 library(tuneR)
 library(dplyr)
 library(base64enc)
@@ -94,8 +94,8 @@ flashcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0
 ui <- fluidPage(
   # App title ----
   titlePanel("Firefly Flash Statistics"),
-  fileInput("file1", "Choose a .wav file",
-            accept = c(".wav")),
+  fileInput("file1", "Choose a .wav or .mp3 file",
+            accept = c(".wav", ".mp3")),
   # Sidebar layout with input and output definitions ----
     sidebarPanel(
       tabsetPanel(
@@ -130,6 +130,15 @@ ui <- fluidPage(
     mainPanel( 
       
       # Output: Histogram ----
+      tabsetPanel(
+        tabPanel( "Example",  
+                  p("just a test"),
+                  tags$div(img(src='singleflash_with_error_1.png', height='80%', width='80%')),
+                 img(src='singleflash_with_error_calc_plot.png', height='80%', width='80%'),
+                  img(src='singleflash_witherror_fixed.png', height='80%', width='80%'),
+                 img(src='singleflash_with_error_table.png', height='80%', width='80%')
+                  ),
+        tabPanel( "Actual data",
       p("This plot is controlled by the 'plot times' tab on the left. It is purely for visulization of the audio"),
       plotOutput(outputId = "flashplot"),
       
@@ -144,8 +153,8 @@ ui <- fluidPage(
       p("This plot is of the audio used in the flash calculations, the red lines are where the r function believes a 
          flash occured"),
       plotOutput(outputId = "resultsplot"))
-      
-    )
+      )
+   ))
   
 
 ##### SERVER #######
@@ -160,7 +169,9 @@ server <- function(input, output, session) {
     # if (is.null(infile)) {
     #   return(NULL)
     # }
-    audio <- readWave(infile$datapath)
+    audio <- if(grepl('.*\\.wav', ignore.case=TRUE, infile$datapath)) {readWave(infile$datapath)} else
+      {readMP3(infile$datapath)}
+   # audio <- readWave(infile$datapath)
     return(audio)
   }) 
 
@@ -206,18 +217,18 @@ server <- function(input, output, session) {
   })
 
 
-observeEvent( input$AUDIO2, {
-
-  req( input$file1 )
-
-  base64 <- dataURI(file = input$file1$datapath, mime = "audio/wav")
-
-  insertUI( selector = "#AUDIO2", where = "afterEnd",
-
-            ui = tags$audio( src = base64, type = "audio/wav", autoplay = NA, controls = NA )
-  )
-
- })
+# observeEvent( input$AUDIO2, {
+# 
+#   req( input$file1 )
+# 
+#   base64 <- dataURI(file = input$file1$datapath, mime = "audio/wav")
+# 
+#   insertUI( selector = "#AUDIO2", where = "afterEnd",
+# 
+#             ui = tags$audio( src = base64, type = "audio/wav", autoplay = NA, controls = NA )
+#   )
+# 
+#  })
 
 }
 
@@ -232,7 +243,6 @@ shinyApp(ui = ui, server = server)
 #deployApp()
 
 #todo
-# mp3 compatability
 # main panel with explanation and example and second panel with the interactive stuff
 # work on code for complex quick flashers, one function can work for all with number of flashes as an input
 # work on code for prolonged glows
