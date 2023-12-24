@@ -24,23 +24,6 @@ plot(fft_data)
 pcm_data <- read_audio_bin(FLASH, channels = 1)
 plot(pcm_data, type = 'l')
 
-library(tuneR)
-# play audio
-play(FLASH)
-
-
-# experiment with down sampling. Standard sample rate is 1600 maybe, so you want to use something
-# lower than that to save space if thats your goal
-pcm_data <- read_audio_bin(FLASH, channels = 1, sample_rate = 16000)
-pcm_data_standard <- read_audio_bin(FLASH, channels = 1)
-plot(pcm_data, type = 'l')
-plot(pcm_data_standard, type = 'l')
-
-
-# Create new audio file with first 5 sec
-av_audio_convert(FLASH, 'short.mp3', total_time = 5)
-av_spectrogram_video('short.mp3', output = 'spectrogram.mp4', width = 1280, height = 720, res = 144)
-
 
 #install.packages("tuneR")
 library(tuneR)
@@ -68,7 +51,7 @@ FF(flashwspec, peakheight = 0.01, silence = 0.2, minpeak = 9, diapason = 440,
 
 ######################################## TEST NEW STUFF
 library(tuneR)
-FLASH = readWave(paste0(getwd(),"/Dunkard_potomaca.WAV"))
+FLASH = readWave(paste0(getwd(),"/fairchilditest.WAV"))
 
 timeArray <- (0:(length(FLASH@left)-1)) / FLASH@samp.rate
 
@@ -78,9 +61,9 @@ plot(x=timeArray, y=FLASH@left, type='l',
 axis(1, at = seq(1, round(max(timeArray)), by = 2), las=2)
 
 
-singleflash(FLASH, start=6, end=40, species="potomaca", sample=1, site="Dunkard", temp=65)
+singleflash(FLASH, start=33, end=53, species="fairchildi", sample=1, site="tom's run", temp=65)
 
-flashcheck(FLASH, start=6, end=40)
+flashcheck(FLASH, start=33, end=53)
 
 
 
