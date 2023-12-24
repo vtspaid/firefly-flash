@@ -27,7 +27,7 @@ plot(pcm_data, type = 'l')
 
 #install.packages("tuneR")
 library(tuneR)
-library(readr)
+#library(readr)
 
 FLASH <- paste0(getwd(),"/Dunkard_potomaca.WAV")
 train_audio = readWave(FLASH)
@@ -51,13 +51,13 @@ FF(flashwspec, peakheight = 0.01, silence = 0.2, minpeak = 9, diapason = 440,
 
 ######################################## TEST NEW STUFF
 library(tuneR)
-FLASH = readWave(paste0(getwd(),"/fairchilditest.WAV"))
+FLASH = readWave(paste0(getwd(),"/glowtest.WAV"))
 
 timeArray <- (0:(length(FLASH@left)-1)) / FLASH@samp.rate
 
 #Plot the wave
 plot(x=timeArray, y=FLASH@left, type='l',
-     col='black', xlab='Seconds', ylab='Amplitude', xaxt="n")
+     col='black', xlab='Seconds', ylab='Amplitude', xaxt="n", xlim=c(12,40))
 axis(1, at = seq(1, round(max(timeArray)), by = 2), las=2)
 
 
@@ -87,3 +87,4 @@ test <- top99new %>% group_by(grouping) %>% summarise(peakTime=median(Time))
 
 
 r <- readMP3("Dunkard_potomaca.mp3") 
+
