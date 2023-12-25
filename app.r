@@ -103,17 +103,17 @@ complexflash <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant
                                       min = min(interflash$timediff[-1]), sd = sd(interflash$timediff[-1]),
                                       flash_num = nrow(interflash)),
               
-              pausedata <- data.frame(Species = species, sample = sample, site=site, temp = temp,
-                                      mean_between_group = mean(betweengroup$timediff),
+              pausedata <- data.frame(mean_between_group = mean(betweengroup$timediff),
                                       max_pause = max(betweengroup$timediff[-1]), 
-                                      min_pause = min(betweengroup$timediff[-1]), pause_sd = sd(betweengroup$timediff[-1]),
+                                      min_pause = min(betweengroup$timediff[-1]), 
+                                      pause_sd = sd(betweengroup$timediff[-1]),
                                       pause_num = nrow(betweengroup))))
   
   
 }
 
 slowglow <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.998,
-                     species="sample", sample=1, site="site", temp=NA){
+                     species="sample", sample=1, site="site", temp=NA, endquant=0.995){
   starting=start*wav@samp.rate+.01 # multiply the starting input by the sample rate to get starting frame
   ending=end*wav@samp.rate # get ending frame
   amp<-wav@left[starting:ending] # creates a vector of amplitudes using provided start and end times
@@ -179,10 +179,10 @@ slowglow <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.9
                                                   min = min(glowtimes$length), sd = sd(glowtimes$length),
                                                   flash_num = nrow(glowtimes)),
               
-              darkperiod_data = pausedata <- data.frame(Species = species, sample = sample, site=site, temp = temp,
-                                                        dark_period = mean(glowtimes$pause[-1]),
+              darkperiod_data = pausedata <- data.frame(dark_period = mean(glowtimes$pause[-1]),
                                                         max_pause = max(glowtimes$pause[-1]), 
-                                                        min_pause = min(glowtimes$pause[-1]), pause_sd = sd(glowtimes$pause[-1]),
+                                                        min_pause = min(glowtimes$pause[-1]), 
+                                                        pause_sd = sd(glowtimes$pause[-1]),
                                                         pause_num = nrow(glowtimes)-1)))
   
 }
@@ -263,7 +263,7 @@ complexflashcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, 
   flashcheck <- plot(x=timeArray, y=amp, type='l',
                      col='black', xlab='Seconds', ylab='Amplitude', xaxt="n")
   axis(1, at = seq(1, round(max(timeArray)), by = 2), las=2)
-  segments(x0=peak$peakTime, x1= peak$peakTime, y0=min(FLASH@left), y1=0, 
+  segments(x0=peak$peakTime, x1= peak$peakTime, y0=min(wav@left), y1=0, 
            col=rep(c("blue", "red"), length(unique(peak$grouping)/2))[peak$grouping])
   
   
@@ -335,9 +335,9 @@ glowcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.
   flashcheck <- plot(x=timeArray, y=amp, type='l',
                      col='black', xlab='Seconds', ylab='Amplitude', xaxt="n")
   axis(1, at = seq(1, round(max(timeArray)), by = 2), las=2)
-  segments(x0 = glowtimes$start, x1 = glowtimes$start, y0=min(FLASH@left), y1=0, 
+  segments(x0 = glowtimes$start, x1 = glowtimes$start, y0=min(wav@left), y1=0, 
            col="green")
-  segments(x0 = glowtimes$end, x1 = glowtimes$end, y0=min(FLASH@left), y1=0, 
+  segments(x0 = glowtimes$end, x1 = glowtimes$end, y0=min(wav@left), y1=0, 
            col="red")
   
   
@@ -369,7 +369,8 @@ ui <- fluidPage(
         tabPanel("Flash calculations",
                  numericInput("tstart", "start time", value = 1, min = 1, max = 30), # start time of recording to use
                  numericInput("tend", "end time", value = 10, min = 1, max = 10000), # end time of recording to use
-                 numericInput("quant", "amplitude quantile", value=0.99, min=0.85, max=1, step = 0.001), # quantile to use for amplitude cutoff
+                 numericInput("quant", "amplitude quantile", value=0.998, min=0.85, max=1, step = 0.001), # quantile to use for amplitude cutoff
+                 numericInput("endquant", "slowglow end quantile", value=0.95, min=0.85, max=1, step = 0.001), # quantile to use for amplitude cutoff
                  textInput("species", "species", value = "", width = NULL, placeholder = NULL), # set species
                  numericInput("sample", "sample #", value = 1, min=1, max = 100000), # set sample number
                  textInput("site", "site name", value = "", width = NULL, placeholder = NULL), # set site
@@ -380,9 +381,7 @@ ui <- fluidPage(
                    column(4, numericInput("rmend1", "Remove noise2", value=0.01, min=0.1, max=1000))
                           ),
                  radioButtons("flashtype", "Flash pattern", choices = c("single flash", "complex flash", "glow")),
-                 actionButton("single_flash", "Run single flash calculations"),
-                 actionButton("complex_flash", "Run complex flash calculations"),
-                 actionButton("glow", "Run glow calculations")
+                 actionButton("flash_calc", "Run flash calculations")
                  )
 
       )),
@@ -462,30 +461,35 @@ server <- function(input, output, session) {
   # single flash
   # create table of flash statistics
   output$flash_stats  <- renderTable({
-    input$single_flash
-    req(input$single_flash)
+    input$flash_calc
+    req(input$flash_calc)
     req(input$file1)
+    isolate(if (input$flashtype == 'single flash') {
+      flashfun <- singleflash
+    } else if (input$flashtype == 'complex flash'){
+      flashfun <- complexflash
+    } else {flashfun <- slowglow})
     dfflash <- FLASH()
     samprate <- FLASH()@samp.rate
     isolate(dfflash@left[c(input$rmstart1*samprate):c(samprate*input$rmend1)] <- 0)
     isolate(
-      singleflash(dfflash,
+      flashfun(dfflash,
                 start=input$tstart, end=input$tend, species=input$species, sample=input$sample,
-               site=input$site, temp=input$temp, quant=input$quant
+               site=input$site, temp=input$temp, quant=input$quant, endquant=input$endquant
                )
             )
                                 })
-  # single flash
+
   # create plot checking where the code thinks the flashes are
   output$resultsplot <- renderPlot({
-    input$single_flash
-    req(input$single_flash)
+    input$flash_calc
+    req(input$flash_calc)
     req(input$file1)
-    if (input$flashtype == 'single flash') {
+    isolate(if (input$flashtype == 'single flash') {
       flashfun <- flashcheck
     } else if (input$flashtype == 'complex flash'){
       flashfun <- complexflashcheck
-    } else {flashfun <- glowcheck}
+    } else {flashfun <- glowcheck})
     df2 <- FLASH()
     samprate <- FLASH()@samp.rate
     isolate(df2@left[c(input$rmstart1*samprate):c(samprate*input$rmend1)] <- 0)
@@ -538,7 +542,8 @@ shinyApp(ui = ui, server = server)
 #deployApp()
 
 #todo
+# debug using endquant for only one of the functions.
+# work on long glow code again.
 # main panel with explanation and example and second panel with the interactive stuff
-# work on code for prolonged glows
 # play only specific sections of audio
 
