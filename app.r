@@ -5,6 +5,7 @@ library(shiny)
 library(tuneR)
 library(dplyr)
 library(base64enc)
+library(howler)
 
 # load example audio
 #FLASH = readWave(paste0(getwd(),"/Dunkard_potomaca.WAV"))
@@ -113,7 +114,7 @@ complexflash <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant
 }
 
 slowglow <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.998,
-                     species="sample", sample=1, site="site", temp=NA, endquant=0.995){
+                     species="sample", sample=1, site="site", temp=NA, endquant=0.99){
   starting=start*wav@samp.rate+.01 # multiply the starting input by the sample rate to get starting frame
   ending=end*wav@samp.rate # get ending frame
   amp<-wav@left[starting:ending] # creates a vector of amplitudes using provided start and end times
@@ -141,7 +142,7 @@ slowglow <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.9
   
   # create groups based on the difference in time. If the difference in time is less than .1 sec
   # then it will be placed in the same sound group.
-  timeamp <- timeamp %>% mutate(sameflash = ifelse(timediff < .15, 0, 1))%>% 
+  timeamp <- timeamp %>% mutate(sameflash = ifelse(timediff < .3, 0, 1))%>% 
     mutate(sameflash = replace(sameflash, is.na(sameflash), 1)) %>%
     mutate(grouping = cumsum(sameflash))
   
@@ -270,7 +271,7 @@ complexflashcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, 
   return(flashcheck)
 }
 
-glowcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.998, endquant = 0.997){
+glowcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.998, endquant = 0.99){
   starting=start*wav@samp.rate+1 # converts seconds into the correct sample number (have to add 1 or default would be invalid)
   ending=end*wav@samp.rate
   amp<-wav@left[starting:ending] # creates a vector of amplitudes using provided start and end times
@@ -298,7 +299,7 @@ glowcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.
   
   # create groups based on the difference in time. If the difference in time is less than .1 sec
   # then it will be placed in the same sound group.
-  timeamp <- timeamp %>% mutate(sameflash = ifelse(timediff < .15, 0, 1))%>% 
+  timeamp <- timeamp %>% mutate(sameflash = ifelse(timediff < .3, 0, 1))%>% 
     mutate(sameflash = replace(sameflash, is.na(sameflash), 1)) %>%
     mutate(grouping = cumsum(sameflash))
   
@@ -354,6 +355,19 @@ ui <- fluidPage(
   titlePanel("Firefly Flash Statistics"),
   fileInput("file1", "Choose a .wav or .mp3 file",
             accept = c(".wav", ".mp3")),
+  # h1("Howler Audio Player"),
+  # howler::howlerModuleUI(
+  #   id = "sound",
+  #   files = list(
+  #     "audio file" = input$file1$datapath
+  #   )
+  # ),
+  howler::howlerBasicModuleUI(
+    id = "123",
+    files = list(
+      "Winning Elevation" = "https://cdn.pixabay.com/download/audio/2022/05/16/audio_db6591201e.mp3"
+    )
+  ),
   # Sidebar layout with input and output definitions ----
     sidebarPanel(
       tabsetPanel(
@@ -363,7 +377,8 @@ ui <- fluidPage(
                   numericInput("end", "plot end time", value = 10, min = 1, max = 10000),
                  
                   #actionButton("AUDIO", "Play recording"),
-        actionButton("AUDIO2", "Play recording2")),
+        actionButton("AUDIO2", "Play recording2"),
+        actionButton("clearaudio", "clear audio")),
 
       
         tabPanel("Flash calculations",
@@ -383,6 +398,8 @@ ui <- fluidPage(
                  radioButtons("flashtype", "Flash pattern", choices = c("single flash", "complex flash", "glow")),
                  actionButton("flash_calc", "Run flash calculations")
                  )
+      
+        
 
       )),
 
@@ -435,6 +452,31 @@ server <- function(input, output, session) {
    # audio <- readWave(infile$datapath)
     return(audio)
   }) 
+  # observeEvent( input$AUDIO2, {
+  # 
+  #   req( input$file1 )
+  #   base64 <- dataURI(file = input$file1$datapath, mime = "audio/wav")
+  # 
+  #   insertUI( selector = "#AUDIO2", where = "afterEnd",
+  # 
+  #             ui = tags$audio( src = base64, type = "audio/wav", autoplay = NA, controls = NA )
+  #   )
+  # 
+  #  })
+  observeEvent(input$AUDIO2, {
+    req( input$file1 )
+    base64 <- dataURI(file = input$file1$datapath, mime = "audio/wav")
+    tags$div(id = "playme", insertUI(selector = '#AUDIO2', where = 'afterEnd',
+    ui = howler::howlerModuleUI(
+      id = "sound",
+      files = list("imported audio" = base64)
+      )
+    ))
+    })
+  
+  observeEvent(input$clearaudio, {
+    removeUI( selector ="div:has(> #123)", immediate = T)
+  })
   
 
   # make max length input reactive to file input 
@@ -464,20 +506,25 @@ server <- function(input, output, session) {
     input$flash_calc
     req(input$flash_calc)
     req(input$file1)
-    isolate(if (input$flashtype == 'single flash') {
-      flashfun <- singleflash
-    } else if (input$flashtype == 'complex flash'){
-      flashfun <- complexflash
-    } else {flashfun <- slowglow})
     dfflash <- FLASH()
     samprate <- FLASH()@samp.rate
     isolate(dfflash@left[c(input$rmstart1*samprate):c(samprate*input$rmend1)] <- 0)
-    isolate(
-      flashfun(dfflash,
-                start=input$tstart, end=input$tend, species=input$species, sample=input$sample,
-               site=input$site, temp=input$temp, quant=input$quant, endquant=input$endquant
-               )
-            )
+    isolate(if (input$flashtype == 'single flash') {
+      singleflash(dfflash,
+                              start=input$tstart, end=input$tend, species=input$species, sample=input$sample,
+                              site=input$site, temp=input$temp, quant=input$quant
+      )
+    } else if (input$flashtype == 'complex flash'){
+      complexflash(dfflash,
+                               start=input$tstart, end=input$tend, species=input$species, sample=input$sample,
+                               site=input$site, temp=input$temp, quant=input$quant
+      )
+    } else {slowglow(dfflash,
+                                 start=input$tstart, end=input$tend, species=input$species, sample=input$sample,
+                                 site=input$site, temp=input$temp, quant=input$quant, endquant=input$endquant
+    )})
+
+            
                                 })
 
   # create plot checking where the code thinks the flashes are
@@ -485,41 +532,23 @@ server <- function(input, output, session) {
     input$flash_calc
     req(input$flash_calc)
     req(input$file1)
-    isolate(if (input$flashtype == 'single flash') {
-      flashfun <- flashcheck
-    } else if (input$flashtype == 'complex flash'){
-      flashfun <- complexflashcheck
-    } else {flashfun <- glowcheck})
     df2 <- FLASH()
     samprate <- FLASH()@samp.rate
     isolate(df2@left[c(input$rmstart1*samprate):c(samprate*input$rmend1)] <- 0)
-  isolate(
-    flashfun(df2, start=input$tstart, end=input$tend, quant=input$quant)
-    )
+    isolate(if (input$flashtype == 'single flash') {
+      flashcheck(df2, start=input$tstart, end=input$tend, quant=input$quant)
+    } else if (input$flashtype == 'complex flash'){
+      complexflashcheck(df2, start=input$tstart, end=input$tend, quant=input$quant)
+    } else {glowcheck(df2, start=input$tstart, end=input$tend, quant=input$quant, endquant=input$endquant)})
+
   })
   
-  # complex flash
-  # create plot checking where the code thinks the flashes are
-  # output$resultsplot <- renderPlot({
-  #   input$complex_flash
-  #   req(input$complex_flash)
-  #   req(input$file1)
-  #   df2 <- FLASH()
-  #   samprate <- FLASH()@samp.rate
-  #   isolate(df2@left[c(input$rmstart1*samprate):c(samprate*input$rmend1)] <- 0)
-  #   isolate(
-  #     complexflashcheck(df2, start=input$tstart, end=input$tend, quant=input$quant)
-  #   )
-  # })
-
-
 
 
 
 # observeEvent( input$AUDIO2, {
 # 
 #   req( input$file1 )
-# 
 #   base64 <- dataURI(file = input$file1$datapath, mime = "audio/wav")
 # 
 #   insertUI( selector = "#AUDIO2", where = "afterEnd",
@@ -542,8 +571,7 @@ shinyApp(ui = ui, server = server)
 #deployApp()
 
 #todo
-# debug using endquant for only one of the functions.
-# work on long glow code again.
 # main panel with explanation and example and second panel with the interactive stuff
-# play only specific sections of audio
+# play only specific sections of audio: figured out howler can probably do that
+#but can't figure out how to remove howler UI
 
