@@ -466,8 +466,8 @@ server <- function(input, output, session) {
   observeEvent(input$AUDIO2, {
     req( input$file1 )
     base64 <- dataURI(file = input$file1$datapath, mime = "audio/wav")
-    tags$div(id = "playme", insertUI(selector = '#AUDIO2', where = 'afterEnd',
-    ui = howler::howlerModuleUI(
+     insertUI(selector = '#AUDIO2', where = 'afterEnd',
+    ui = tags$div(id = "howleraudio", howler::howlerModuleUI(
       id = "sound",
       files = list("imported audio" = base64)
       )
@@ -475,7 +475,7 @@ server <- function(input, output, session) {
     })
   
   observeEvent(input$clearaudio, {
-    removeUI( selector ="div:has(> #123)", immediate = T)
+    removeUI( selector ="#howleraudio", immediate = T)
   })
   
 
@@ -543,20 +543,6 @@ server <- function(input, output, session) {
 
   })
   
-
-
-
-# observeEvent( input$AUDIO2, {
-# 
-#   req( input$file1 )
-#   base64 <- dataURI(file = input$file1$datapath, mime = "audio/wav")
-# 
-#   insertUI( selector = "#AUDIO2", where = "afterEnd",
-# 
-#             ui = tags$audio( src = base64, type = "audio/wav", autoplay = NA, controls = NA )
-#   )
-# 
-#  })
 
 }
 
