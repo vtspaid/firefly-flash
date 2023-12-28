@@ -6,6 +6,7 @@ library(tuneR)
 library(dplyr)
 library(base64enc)
 library(howler)
+library(shinyjs)
 
 # load example audio
 #FLASH = readWave(paste0(getwd(),"/Dunkard_potomaca.WAV"))
@@ -355,19 +356,7 @@ ui <- fluidPage(
   titlePanel("Firefly Flash Statistics"),
   fileInput("file1", "Choose a .wav or .mp3 file",
             accept = c(".wav", ".mp3")),
-  # h1("Howler Audio Player"),
-  # howler::howlerModuleUI(
-  #   id = "sound",
-  #   files = list(
-  #     "audio file" = input$file1$datapath
-  #   )
-  # ),
-  howler::howlerBasicModuleUI(
-    id = "123",
-    files = list(
-      "Winning Elevation" = "https://cdn.pixabay.com/download/audio/2022/05/16/audio_db6591201e.mp3"
-    )
-  ),
+
   # Sidebar layout with input and output definitions ----
     sidebarPanel(
       tabsetPanel(
@@ -382,7 +371,7 @@ ui <- fluidPage(
 
       
         tabPanel("Flash calculations",
-                 numericInput("tstart", "start time", value = 1, min = 1, max = 30), # start time of recording to use
+                 numericInput("tstart", "start time", value = 0, min = 1, max = 30), # start time of recording to use
                  numericInput("tend", "end time", value = 10, min = 1, max = 10000), # end time of recording to use
                  numericInput("quant", "amplitude quantile", value=0.998, min=0.85, max=1, step = 0.001), # quantile to use for amplitude cutoff
                  numericInput("endquant", "slowglow end quantile", value=0.95, min=0.85, max=1, step = 0.001), # quantile to use for amplitude cutoff
@@ -390,16 +379,12 @@ ui <- fluidPage(
                  numericInput("sample", "sample #", value = 1, min=1, max = 100000), # set sample number
                  textInput("site", "site name", value = "", width = NULL, placeholder = NULL), # set site
                  numericInput("temp", "Temperature", value = "", min=1, max = 100000), # set temp
-                 # actionButton('deletetime', "remove noise"))
-                 fluidRow(
-                   column(4, numericInput("rmstart1", "Remove noise", value=0.01, min=0.1, max=1000)),
-                   column(4, numericInput("rmend1", "Remove noise2", value=0.01, min=0.1, max=1000))
-                          ),
                  radioButtons("flashtype", "Flash pattern", choices = c("single flash", "complex flash", "glow")),
-                 actionButton("flash_calc", "Run flash calculations")
+                              actionButton("cancelnoise", "remove noise"),
+                              actionButton("rmv_cancelnoise", "restore noise"),
+                 actionButton("flash_calc", "Run flash calculations"),
+                 useShinyjs()
                  )
-      
-        
 
       )),
 
@@ -452,17 +437,8 @@ server <- function(input, output, session) {
    # audio <- readWave(infile$datapath)
     return(audio)
   }) 
-  # observeEvent( input$AUDIO2, {
-  # 
-  #   req( input$file1 )
-  #   base64 <- dataURI(file = input$file1$datapath, mime = "audio/wav")
-  # 
-  #   insertUI( selector = "#AUDIO2", where = "afterEnd",
-  # 
-  #             ui = tags$audio( src = base64, type = "audio/wav", autoplay = NA, controls = NA )
-  #   )
-  # 
-  #  })
+
+  # insert audio UI
   observeEvent(input$AUDIO2, {
     req( input$file1 )
     base64 <- dataURI(file = input$file1$datapath, mime = "audio/wav")
@@ -474,8 +450,31 @@ server <- function(input, output, session) {
     ))
     })
   
+  # remove audio UI
   observeEvent(input$clearaudio, {
     removeUI( selector ="#howleraudio", immediate = T)
+  })
+  
+  #initilize a reactive value
+  counter <- reactiveValues(countervalue = 0)
+  
+  # insert numeric inputs to remove background noise
+  observeEvent(input$cancelnoise, {
+    counter$countervalue <- counter$countervalue + 1 
+    num <- counter$countervalue
+    insertUI( selector = "#cancelnoise", where = 'afterEnd',
+              ui =  fluidRow( tags$div(id="removeall", column(4, numericInput(paste0("rmstart",num), "Remove noise", value=0.01, min=0.1, max=1000)),
+                                       column(4, numericInput(paste0("rmend", num), "Remove noise2", value=0.01, min=0.1, max=1000))
+              )))
+  })
+  
+  # remove UI inputs for background noise
+  observeEvent(input$rmv_cancelnoise, {
+    updateNumericInput(session, "rmstart1", value =0)
+    updateNumericInput(session, "rmstart2", value =0)
+    updateNumericInput(session, "rmend1", value =0)
+    updateNumericInput(session, "rmend2", value =0)
+    removeUI( selector ="#removeall", immediate = F)
   })
   
 
@@ -535,6 +534,7 @@ server <- function(input, output, session) {
     df2 <- FLASH()
     samprate <- FLASH()@samp.rate
     isolate(df2@left[c(input$rmstart1*samprate):c(samprate*input$rmend1)] <- 0)
+    isolate(df2@left[c(input$rmstart2*samprate):c(samprate*input$rmend2)] <- 0)
     isolate(if (input$flashtype == 'single flash') {
       flashcheck(df2, start=input$tstart, end=input$tend, quant=input$quant)
     } else if (input$flashtype == 'complex flash'){
@@ -558,6 +558,6 @@ shinyApp(ui = ui, server = server)
 
 #todo
 # main panel with explanation and example and second panel with the interactive stuff
-# play only specific sections of audio: figured out howler can probably do that
-#but can't figure out how to remove howler UI
+# make the rendertable and renderplot reactive to countervalue, also the remove ui
+# use everything that I did for cancelnoise, and create the ability to add a flash
 

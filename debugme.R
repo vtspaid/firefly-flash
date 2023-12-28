@@ -7,20 +7,11 @@ library(base64enc)
 ui <- fluidPage(
   fileInput("file1", "Choose a .wav or .mp3 file",  accept = c(".wav", ".mp3")),
 
- tags$div(id = "removenow", howler::howlerBasicModuleUI(
-    id = "rmv",
-    files = list(
-      "Winning Elevation" = "https://cdn.pixabay.com/download/audio/2022/05/16/audio_db6591201e.mp3"
-    )
-  )),
   sidebarPanel("sidebar",
-               actionButton("AUDIO2", "Play recording2"),
-                 actionButton("clearaudio", "clear audio"),
-                actionButton("rmv", "remove me"),
-               numericInput("rmv", "start", value=1),
-                numericInput("end", "end", value =20))
+               actionButton("needremove", "remove sound"),
+               actionButton("removeme", "removeme")
         
-)
+))
 
 server <- function(input, output, session) {
   # read in file
@@ -32,20 +23,15 @@ server <- function(input, output, session) {
     return(audio)
   }) 
   
-  observeEvent(input$AUDIO2, {
-    req( input$file1 )
-    base64 <- dataURI(file = input$file1$datapath, mime = "audio/wav")
-    insertUI(selector = '#AUDIO2', where = 'afterEnd',
-                                     ui = tags$div(id = "playme", howler::howlerModuleUI(
-                                       id = "sound",
-                                       files = list("imported audio" = base64),
-                                       
-                                     ),
-                                     howlerSeekSlider("playme")
-    ))
+  observeEvent(input$needremove, {
+insertUI( selector = "#needremove", where = 'afterEnd',
+  ui =  fluidRow( tags$div(id="removeall", column(4, numericInput("rmstart1", "Remove noise", value=0.01, min=0.1, max=1000)),
+           column(4, numericInput("rmend1", "Remove noise2", value=0.01, min=0.1, max=1000))
+  )))
   })
-  observeEvent(input$clearaudio, {
-    removeUI( selector ="#playme", immediate = T)
+  
+  observeEvent(input$removeme, {
+    removeUI( selector ="#removeall", immediate = T)
   })
 }
 
