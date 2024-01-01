@@ -175,13 +175,13 @@ slowglow <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.9
   # get pause length
   glowtimes$pause <- glowtimes$start-glowtimes$last_end
   
-  return(list(glow_data = flashdata <- data.frame(Species = species, sample = sample, site=site, temp = temp, 
+  return(list(glow_data <- data.frame(Species = species, sample = sample, site=site, temp = temp, 
                                                   mean_glow=mean(glowtimes$length),
                                                   max_glow = max(glowtimes$length), 
                                                   min = min(glowtimes$length), sd = sd(glowtimes$length),
                                                   flash_num = nrow(glowtimes)),
               
-              darkperiod_data = pausedata <- data.frame(dark_period = mean(glowtimes$pause[-1]),
+              darkperiod_data <- data.frame(dark_period = mean(glowtimes$pause[-1]),
                                                         max_pause = max(glowtimes$pause[-1]), 
                                                         min_pause = min(glowtimes$pause[-1]), 
                                                         pause_sd = sd(glowtimes$pause[-1]),
@@ -380,9 +380,11 @@ ui <- fluidPage(
                  textInput("site", "site name", value = "", width = NULL, placeholder = NULL), # set site
                  numericInput("temp", "Temperature", value = "", min=1, max = 100000), # set temp
                  radioButtons("flashtype", "Flash pattern", choices = c("single flash", "complex flash", "glow")),
-                              actionButton("cancelnoise", "remove noise"),
-                              actionButton("rmv_cancelnoise", "restore noise"),
-                 actionButton("flash_calc", "Run flash calculations"),
+                 fluidRow( column(1, actionButton("cancelnoise", "remove noise"))),
+                           fluidRow(column(1, actionButton("rmv_cancelnoise", "restore noise"))),
+                           fluidRow(column(1, actionButton("addflash", "add flash/noise"))),
+                           fluidRow(column(1, actionButton("rmv_addflash", "remove added flash/noise"))),
+                           fluidRow(column(1, actionButton("flash_calc", "Run flash calculations"))),
                  useShinyjs()
                  )
 
@@ -395,12 +397,41 @@ ui <- fluidPage(
       # Output: Histogram ----
       tabsetPanel(
         tabPanel( "Example",  
-                  p("just a test"),
+                  br(),
+                  h1("This page is non-interactive"),
+                  p("After reviewing the examples on this page move to the 'Run' tab to run calculations
+                   on your audio file"),
+                  br(),br(),
+                  p("First use the browse button to find a file to upload."),
+                  p("On 'Run' tab a plot of your audio file will already appear. It will look like the figure belw."),
                   tags$div(img(src='singleflash_with_error_1.png', height='80%', width='80%')),
+                  br(),
+                  p("You can control the beginning and ending of this plot with the 'plot times' tab on the left. 
+                    The start and end times on this tab only control the view of the first plot, they do not affect 
+                    the range of the audio that the calculation is uses."),
+                  br(), br(),
+                  p("To control the range of audio that is used for calculating flash stats, switch to the 'Flash 
+                    calculations' tab on the left. There you will see a number of inputs that you can modify to change 
+                    the results of the flash calculations. You can use the default settings and hit the 'Run Flash
+                    Calculations' button at the bottom of the tab. That will produce a graph similar to this one"),
                  img(src='singleflash_with_error_calc_plot.png', height='80%', width='80%'),
+                 br(),
+                 p("It will also produce a table like this one"),
+                 img(src='singleflash_with_error_table.png', height='80%', width='80%'),
+                 br(), br(),
+                 p("The red lines show you where the function believes the flashes are. We see that there is 
+                   an erroneous flash at around the 9 second mark in this example. We can use the 'remove noise' 
+                   button to supply two times. In this example we would use 8.7 and 8.9; we can now run 
+                   the function again and it will produce a plot like the one below. The table will also be updated."),
                   img(src='singleflash_witherror_fixed.png', height='80%', width='80%'),
-                 img(src='singleflash_with_error_table.png', height='80%', width='80%')
+                 br(), br(),
+                 p("We can use the 'add flash' button to add a flash if the code is missing one"),
+                 br(), p("The radio buttons will select which of three functions to use on the audio 
+                         basesd on what type of flash pattern you belive it to be. The amplitude quantile 
+                         controls how loud a noise is before it is considered a flash; slight changes make a big 
+                         differences, best results tend to be between 0.995 and 0.999.")
                   ),
+        
         tabPanel( "Actual data",
       p("This plot is controlled by the 'plot times' tab on the left. It is purely for visulization of the audio"),
       plotOutput(outputId = "flashplot"),
@@ -415,9 +446,12 @@ ui <- fluidPage(
       br(),
       p("This plot is of the audio used in the flash calculations, the red lines are where the r function believes a 
          flash occured"),
-      plotOutput(outputId = "resultsplot"))
-      )
-   ))
+      plotOutput(outputId = "resultsplot")),
+      
+      tabPanel("help info",
+               p("This will eventually provide detailed help documentation"))
+      ))
+   )
   
 
 ##### SERVER #######
@@ -455,11 +489,15 @@ server <- function(input, output, session) {
     removeUI( selector ="#howleraudio", immediate = T)
   })
   
-  #initilize a reactive value
+  #initilize a reactive value for removing noise
   counter <- reactiveValues(countervalue = 0)
+  
+  # intialize another reactive value for adding flash
+  counterflash <- reactiveValues(countervalue = 0)
   
   # insert numeric inputs to remove background noise
   observeEvent(input$cancelnoise, {
+    req(input$cancelnoise)
     counter$countervalue <- counter$countervalue + 1 
     num <- counter$countervalue
     insertUI( selector = "#cancelnoise", where = 'afterEnd',
@@ -470,11 +508,68 @@ server <- function(input, output, session) {
   
   # remove UI inputs for background noise
   observeEvent(input$rmv_cancelnoise, {
-    updateNumericInput(session, "rmstart1", value =0)
-    updateNumericInput(session, "rmstart2", value =0)
-    updateNumericInput(session, "rmend1", value =0)
-    updateNumericInput(session, "rmend2", value =0)
+     updateNumericInput(session, "rmstart1", value =0)
+     updateNumericInput(session, "rmstart2", value =0)
+     updateNumericInput(session, "rmstart3", value =0)
+     updateNumericInput(session, "rmstart4", value =0)
+     updateNumericInput(session, "rmstart5", value =0)
+     updateNumericInput(session, "rmstart6", value =0)
+     updateNumericInput(session, "rmstart7", value =0)
+     updateNumericInput(session, "rmstart8", value =0)
+     updateNumericInput(session, "rmstart9", value =0)
+     updateNumericInput(session, "rmstart10", value =0)
+     updateNumericInput(session, "rmstart11", value =0)
+     updateNumericInput(session, "rmstart12", value =0)
+     updateNumericInput(session, "rmstart13", value =0)
+     updateNumericInput(session, "rmstart14", value =0)
+     updateNumericInput(session, "rmstart15", value =0)
+     updateNumericInput(session, "rmend1", value =0)
+     updateNumericInput(session, "rmend2", value =0)
+     updateNumericInput(session, "rmend3", value =0)
+     updateNumericInput(session, "rmend4", value =0)
+     updateNumericInput(session, "rmend5", value =0)
+     updateNumericInput(session, "rmend6", value =0)
+     updateNumericInput(session, "rmend7", value =0)
+     updateNumericInput(session, "rmend8", value =0)
+     updateNumericInput(session, "rmend9", value =0)
+     updateNumericInput(session, "rmend10", value =0)
+     updateNumericInput(session, "rmend11", value =0)
+     updateNumericInput(session, "rmend12", value =0)
+     updateNumericInput(session, "rmend13", value =0)
+     updateNumericInput(session, "rmend14", value =0)
+     updateNumericInput(session, "rmend15", value =0)
     removeUI( selector ="#removeall", immediate = F)
+  })
+  
+  # insert numeric inputs to add noise
+  observeEvent(input$addflash, {
+    req(input$addflash)
+    counterflash$countervalue <- counterflash$countervalue +1
+    num1 <- counterflash$countervalue
+    insertUI(selector = "#addflash", where = 'afterEnd',
+             ui = fluidRow(tags$div(id="flashadd", column(4, numericInput(paste0("added", num1), 
+                                                                          "add a flash", value=NA, min=0, max=1000)))))
+  })
+  
+  # remove UI inputs for adding flash
+  observeEvent(input$rmv_addflash, {
+    updateNumericInput(session, "added1", value =NA)
+    updateNumericInput(session, "added2", value =NA)
+    updateNumericInput(session, "added3", value =NA)
+    updateNumericInput(session, "added4", value =NA)
+    updateNumericInput(session, "added5", value =NA)
+    updateNumericInput(session, "added6", value =NA)
+    updateNumericInput(session, "added7", value =NA)
+    updateNumericInput(session, "added8", value =NA)
+    updateNumericInput(session, "added9", value =NA)
+    updateNumericInput(session, "added10", value =NA)
+    updateNumericInput(session, "added11", value =NA)
+    updateNumericInput(session, "added12", value =NA)
+    updateNumericInput(session, "added13", value =NA)
+    updateNumericInput(session, "added14", value =NA)
+    updateNumericInput(session, "added15", value =NA)
+    removeUI(selector="#flashadd", immediate=F)
+    
   })
   
 
@@ -507,7 +602,32 @@ server <- function(input, output, session) {
     req(input$file1)
     dfflash <- FLASH()
     samprate <- FLASH()@samp.rate
-    isolate(dfflash@left[c(input$rmstart1*samprate):c(samprate*input$rmend1)] <- 0)
+    
+    #remove flash
+    isolate(if(counter$countervalue >0) 
+    {rm_times <- lapply(1:counter$countervalue, function(x) 
+      data.frame(start = eval(parse(text =paste0("input$rmstart",x))),
+                 end = eval(parse(text=paste0("input$rmend",x)))
+      ))
+    }
+    )
+    isolate( if(counter$countervalue >0)  {for (ii in 1:length(rm_times)){
+      dfflash@left[c(rm_times[[ii]]$start*samprate):c(rm_times[[ii]]$end*samprate)] <- 0
+    }
+    })
+    # add flash
+    isolate(if(counterflash$countervalue >0) 
+    {add_times <- lapply(1:counterflash$countervalue, function(x) 
+      data.frame(newflash = eval(parse(text =paste0("input$added",x))))
+      )
+      })
+    
+    isolate( if(counterflash$countervalue >0)  {for (ii in 1:length(add_times)){
+      dfflash@left[c(add_times[[ii]]$newflash*samprate)] <- quantile(dfflash@left, input$quant)+1
+    }
+    })
+    
+    # render table
     isolate(if (input$flashtype == 'single flash') {
       singleflash(dfflash,
                               start=input$tstart, end=input$tend, species=input$species, sample=input$sample,
@@ -533,8 +653,31 @@ server <- function(input, output, session) {
     req(input$file1)
     df2 <- FLASH()
     samprate <- FLASH()@samp.rate
-    isolate(df2@left[c(input$rmstart1*samprate):c(samprate*input$rmend1)] <- 0)
-    isolate(df2@left[c(input$rmstart2*samprate):c(samprate*input$rmend2)] <- 0)
+    #remove flash
+    isolate(if(counter$countervalue >0) 
+      {rm_times <- lapply(1:counter$countervalue, function(x) 
+        data.frame(start = eval(parse(text =paste0("input$rmstart",x))),
+        end = eval(parse(text=paste0("input$rmend",x)))
+        ))
+    }
+    )
+   isolate( if(counter$countervalue >0)  {for (ii in 1:length(rm_times)){
+      df2@left[c(rm_times[[ii]]$start*samprate):c(rm_times[[ii]]$end*samprate)] <- 0
+    }
+     })
+   
+   # add flash
+   isolate(if(counterflash$countervalue >0) 
+   {add_times <- lapply(1:counterflash$countervalue, function(x) 
+     data.frame(newflash = eval(parse(text =paste0("input$added",x))))
+   )
+   })
+   
+   isolate( if(counterflash$countervalue >0)  {for (ii in 1:length(add_times)){
+     df2@left[c(add_times[[ii]]$newflash*samprate)] <- c(quantile(df2@left, probs=input$quant)+1)
+   }
+   })
+   
     isolate(if (input$flashtype == 'single flash') {
       flashcheck(df2, start=input$tstart, end=input$tend, quant=input$quant)
     } else if (input$flashtype == 'complex flash'){
@@ -558,6 +701,6 @@ shinyApp(ui = ui, server = server)
 
 #todo
 # main panel with explanation and example and second panel with the interactive stuff
-# make the rendertable and renderplot reactive to countervalue, also the remove ui
-# use everything that I did for cancelnoise, and create the ability to add a flash
+# fix bug where audio continues playing even after ui is removed
+
 

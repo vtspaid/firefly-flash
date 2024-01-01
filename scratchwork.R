@@ -85,6 +85,40 @@ library(dplyr)
 
 test <- top99new %>% group_by(grouping) %>% summarise(peakTime=median(Time))
 
+FLASH <- readWave("Dunkard_potomaca.WAV")
 
-r <- readMP3("Dunkard_potomaca.mp3") 
+rmnoise <- function(x, y, samprate) {x@left[c(eval(as.name(paste0("rmstart" , y)))*samprate):
+                                              c(eval(as.name(paste0("rmend" , y)))*samprate)] <- 0
+return(x@left)
+}
 
+
+testme <- lapply(1:counter, function(x) data.frame(start = eval(as.name(paste0("rmstart",x))),
+                                                 end = eval(as.name(paste0("rmend",x)))))
+f <- FLASH@left
+temp <-list()
+
+for (ii in 1:length(testme)){
+  temp[[ii]] <- f
+  temp[[ii]][c(testme[[ii]]$start*samprate):c(testme[[ii]]$end*samprate)] <- 0
+  temp[[ii+1]] <- temp[[ii]]
+  f <- temp[[ii+1]]
+}
+plot(f[c(0.1*samprate):c(18*samprate)])
+
+f <- FLASH
+for (ii in 1:length(testme)){
+  f@left[c(testme[[ii]]$start*samprate):c(testme[[ii]]$end*samprate)] <- 0
+}
+plot(f@left[c(0.1*samprate):c(18*samprate)])
+
+test  <- lapply( function)
+
+ test <- rmnoise(x=FLASH, y=1, samprate=samprate)
+plot(test@left[c(rmstart1*samprate):c(rmend1*samprate)])
+
+s <- lapply(1:counter,function(x) rmnoise(x=FLASH, y=x, samprate=samprate))
+
+plot(s[[2]])
+
+FLASH2 <- FLASH@left-s
