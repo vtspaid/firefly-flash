@@ -360,14 +360,13 @@ ui <- fluidPage(
   # Sidebar layout with input and output definitions ----
     sidebarPanel(
       tabsetPanel(
-        tabPanel("plot times",
+        tabPanel("Plot start and end times",
                   # the next two lines are inputs for the xlim of the audio plot. The end gets updated later
                   numericInput("start", "plot start time", value = 0, min = 0, max = 10000),
                   numericInput("end", "plot end time", value = 10, min = 1, max = 10000),
-                 
-                  #actionButton("AUDIO", "Play recording"),
-        actionButton("AUDIO2", "Play recording2"),
-        actionButton("clearaudio", "clear audio")),
+
+        actionButton("AUDIO2", "Play audio"),
+        actionButton("clearaudio", "Remove audio player")),
 
       
         tabPanel("Flash calculations",
@@ -378,12 +377,14 @@ ui <- fluidPage(
                  textInput("species", "species", value = "", width = NULL, placeholder = NULL), # set species
                  numericInput("sample", "sample #", value = 1, min=1, max = 100000), # set sample number
                  textInput("site", "site name", value = "", width = NULL, placeholder = NULL), # set site
-                 numericInput("temp", "Temperature", value = "", min=1, max = 100000), # set temp
-                 radioButtons("flashtype", "Flash pattern", choices = c("single flash", "complex flash", "glow")),
+                 numericInput("temp", "temperature", value = "", min=1, max = 100000), # set temp
+                 radioButtons("flashtype", "tlash pattern", choices = c("single flash", "complex flash", "glow")),
                  fluidRow( column(1, actionButton("cancelnoise", "remove noise"))),
                            fluidRow(column(1, actionButton("rmv_cancelnoise", "restore noise"))),
+                            br(),
                            fluidRow(column(1, actionButton("addflash", "add flash/noise"))),
                            fluidRow(column(1, actionButton("rmv_addflash", "remove added flash/noise"))),
+                            br(),
                            fluidRow(column(1, actionButton("flash_calc", "Run flash calculations"))),
                  useShinyjs()
                  )
@@ -396,43 +397,53 @@ ui <- fluidPage(
       
       # Output: Histogram ----
       tabsetPanel(
-        tabPanel( "Example",  
+        tabPanel( "Example",
                   br(),
-                  h1("This page is non-interactive"),
-                  p("After reviewing the examples on this page move to the 'Run' tab to run calculations
+                  h2("Flash Calculation Example"),
+                  br(),
+                  h4("This page is non-interactive"),
+                  h4("After reviewing the examples on this page move to the 'Run Flash Calculations' tab to run calculations
                    on your audio file"),
+                  br(),
+                  p("One quick note, this page was put together before some updates were made to the code. That changed
+                  the figure appearances. so don't worry if you're figures don't look quite like these ones."),
                   br(),br(),
-                  p("First use the browse button to find a file to upload."),
-                  p("On 'Run' tab a plot of your audio file will already appear. It will look like the figure belw."),
+                  p("First use the browse button to find and upload your audio file."),
+                  p("On 'Run' tab a plot of your audio file will automatically render. It will look like the figure below."),
                   tags$div(img(src='singleflash_with_error_1.png', height='80%', width='80%')),
                   br(),
-                  p("You can control the beginning and ending of this plot with the 'plot times' tab on the left. 
-                    The start and end times on this tab only control the view of the first plot, they do not affect 
-                    the range of the audio that the calculation is uses."),
+                  p("You can control the beginning and ending of this plot with the first tab on the left.
+                    The inputs on this tab only control the x axis of the first plot, they do not affect
+                    the flash calculations in any way."),
                   br(), br(),
-                  p("To control the range of audio that is used for calculating flash stats, switch to the 'Flash 
-                    calculations' tab on the left. There you will see a number of inputs that you can modify to change 
-                    the results of the flash calculations. You can use the default settings and hit the 'Run Flash
-                    Calculations' button at the bottom of the tab. That will produce a graph similar to this one"),
+                  p("To control how the flash statistics are calculated, swithc to the 'Flash
+                    calculations' tab on the left. There you will see a number of inputs that you can modify to change
+                 how the flash statistics are calculated. You can use the default settings and hit the 'run flash
+                    calculations' button at the bottom of the tab. That will produce a graph similar to this one"),
                  img(src='singleflash_with_error_calc_plot.png', height='80%', width='80%'),
                  br(),
                  p("It will also produce a table like this one"),
                  img(src='singleflash_with_error_table.png', height='80%', width='80%'),
                  br(), br(),
-                 p("The red lines show you where the function believes the flashes are. We see that there is 
-                   an erroneous flash at around the 9 second mark in this example. We can use the 'remove noise' 
-                   button to supply two times. In this example we would use 8.7 and 8.9; we can now run 
+                 p("The red lines show you where the function believes flashes occurred. We see that there is
+                   an erroneous flash at around the 9 second mark in this example. We can use the 'remove noise'
+                   button to supply a time range where we wish to remove all noise.
+                   In this example we would use 8.7 and 8.9. We can now run
                    the function again and it will produce a plot like the one below. The table will also be updated."),
                   img(src='singleflash_witherror_fixed.png', height='80%', width='80%'),
                  br(), br(),
-                 p("We can use the 'add flash' button to add a flash if the code is missing one"),
-                 br(), p("The radio buttons will select which of three functions to use on the audio 
-                         basesd on what type of flash pattern you belive it to be. The amplitude quantile 
-                         controls how loud a noise is before it is considered a flash; slight changes make a big 
-                         differences, best results tend to be between 0.995 and 0.999.")
+                 p("We can use the 'add flash' button to add a flash if the code is missing one."),
+                 br(), p("The radio buttons will select which of three functions to use on the audio
+                         based on what type of flash pattern you belive it to be. The amplitude quantile
+                         controls how loud a noise is before it is considered a flash; slight changes make a big
+                         differences, best results tend to be between 0.995 and 0.999. The 'slowglow end quantile'
+                         is only relevant if the 'slow glow' function is being used, and should usually be made equal
+                         to the 'amplitude quantile'. Species, sample#, site name, and temperature are not necessary
+                         for the code to run, and are only there to make it easier to copy and paste the table to a spreadsheet.
+                         ")
                   ),
-        
-        tabPanel( "Actual data",
+
+        tabPanel( "Run Flash Calculations",
       p("This plot is controlled by the 'plot times' tab on the left. It is purely for visulization of the audio"),
       plotOutput(outputId = "flashplot"),
       
@@ -691,7 +702,7 @@ server <- function(input, output, session) {
 
 
 shinyApp(ui = ui, server = server)
-
+runApp()
 #runApp("app.r")
 
 
@@ -702,5 +713,6 @@ shinyApp(ui = ui, server = server)
 #todo
 # main panel with explanation and example and second panel with the interactive stuff
 # fix bug where audio continues playing even after ui is removed
+# add detailed help
 
 
