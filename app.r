@@ -352,10 +352,20 @@ glowcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.
 
 
 ui <- fluidPage(
+  
+  # add color
+  tags$style('.container-fluid {
+                             background-color: #BDF5BD;
+              }'),
   # App title ----
-  titlePanel("Firefly Flash Statistics"),
+  titlePanel(p("Firefly Flash Statistics", style='font-weight: bold; font-size:120%; text-align:center')),
   fileInput("file1", "Choose a .wav or .mp3 file",
             accept = c(".wav", ".mp3")),
+  
+  # add image to top right of page
+  tags$div(img(src='potomaca_pic.png', height='50%', width='50%', style="position:relative; left:20px")),
+ # tags$div(img(src='potomaca_pic.png', height='50%', width='50%', style='object-position:right')),
+  img(src='potomaca_pic.png', style='object-position:left'),
 
   # Sidebar layout with input and output definitions ----
     sidebarPanel(
@@ -385,7 +395,7 @@ ui <- fluidPage(
                            fluidRow(column(1, actionButton("addflash", "add flash/noise"))),
                            fluidRow(column(1, actionButton("rmv_addflash", "remove added flash/noise"))),
                             br(),
-                           fluidRow(column(1, actionButton("flash_calc", "Run flash calculations"))),
+                           fluidRow(column(1, actionButton("flash_calc", "Run flash calculations", style='font-weight: bold; font-size:120%'))),
                  useShinyjs()
                  )
 
@@ -703,7 +713,7 @@ server <- function(input, output, session) {
 
 shinyApp(ui = ui, server = server)
 runApp()
-#runApp("app.r")
+runApp("app.r")
 
 
 # to deploy app
