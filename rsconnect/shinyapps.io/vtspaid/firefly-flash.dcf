@@ -5,9 +5,9 @@ account: vtspaid
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 10809508
-bundleId: 8099696
+bundleId: 8139369
 url: https://vtspaid.shinyapps.io/firefly-flash/
 version: 1
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: 20230612009.WAV|20230624003.WAV|complextest.WAV|data/Dunkard_potomaca.WAV|debugme.R|Dunkard_potomaca.mp3|Dunkard_potomaca.WAV|fairchilditest.WAV|fiRefly_functions.R|glowtest.WAV|mactest.WAV|next steps to try.docx|scratchwork.R|short.mp3|spectrogram.mp4|test.R
+ignoredFiles: 20230612009.WAV|20230624003.WAV|audio_for_shiny_app.mp3|complextest.WAV|data/Dunkard_potomaca.WAV|debugme.R|Dunkard_potomaca.WAV|fairchilditest.WAV|fiRefly_functions.R|glowtest.WAV|mactest.WAV|next steps to try.docx|scratchwork.R|short.mp3|spectrogram.mp4|test.R
