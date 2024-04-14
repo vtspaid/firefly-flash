@@ -1,7 +1,7 @@
 ### Code for creating shiny app that calculates statistics for firefly flashes ###
 
 #load necessary packages
-library(shiny)
+#library(shiny)
 library(tuneR)
 library(dplyr)
 library(base64enc)
@@ -401,7 +401,7 @@ fileInput("file1", "Choose a .wav or .mp3 file",
     # Main panel for displaying outputs ----
     mainPanel( 
       
-      # Output: Histogram ----
+      # Example tab ----
       tabsetPanel(
         tabPanel( "Example",
                   br(),
@@ -414,31 +414,36 @@ fileInput("file1", "Choose a .wav or .mp3 file",
                   p("One quick note, this page was put together before some updates were made to the code. That changed
                   the figure appearances. so don't worry if you're figures don't look quite like these ones."),
                   br(),br(),
-                  p("First use the browse button to find and upload your audio file."),
-                  p("On 'Run' tab a plot of your audio file will automatically render. It will look like the figure below."),
+                  p("First use the browse button at the top left of the page to find and upload your audio file. 
+                    File size is currently limited to 15 MB"),
+                  p("A plot of your audio file will automatically render. It will look similar the figure below."),
                   tags$div(img(src='singleflash_with_error_1.png', height='80%', width='80%')),
                   br(),
-                  p("You can control the beginning and ending of this plot with the first tab on the left.
-                    The inputs on this tab only control the x axis of the first plot, they do not affect
-                    the flash calculations in any way."),
+                  p("You can control the x axis of this plot with the first tab on the left. This plot is only for visualization
+                    purposes. The start and end times that control this plot, do not set the start and end time of the flash 
+                    calculation functions"),
                   br(), br(),
-                  p("To control how the flash statistics are calculated, swithc to the 'Flash
+                  p("To control how the flash statistics are calculated, switch to the 'Flash
                     calculations' tab on the left. There you will see a number of inputs that you can modify to change
-                 how the flash statistics are calculated. You can use the default settings and hit the 'run flash
-                    calculations' button at the bottom of the tab. That will produce a graph similar to this one"),
-                 img(src='singleflash_with_error_calc_plot.png', height='80%', width='80%'),
-                 br(),
-                 p("It will also produce a table like this one"),
-                 img(src='singleflash_with_error_table.png', height='80%', width='80%'),
+                 how the flash statistics are calculated. The flash statistics will not be calculated until you hit the 
+                    'Run Flash Calculations' button. Once you do a plot similar to the one shown below will render"),
+                 img(src='singleflash_with_error_calc_plot2.png', height='80%', width='80%'),
+                 br(), br(),
+                 p("It will also produce a table containing results"),
+                 img(src='table_with_error.png', height='50%', width='50%'),
                  br(), br(),
                  p("The red lines show you where the function believes flashes occurred. We see that there is
                    an erroneous flash at around the 9 second mark in this example. We can use the 'remove noise'
                    button to supply a time range where we wish to remove all noise.
                    In this example we would use 8.7 and 8.9. We can now run
                    the function again and it will produce a plot like the one below. The table will also be updated."),
-                  img(src='singleflash_witherror_fixed.png', height='80%', width='80%'),
+                  img(src='singleflash_witherror_fixed2.png', height='80%', width='80%'),
                  br(), br(),
-                 p("We can use the 'add flash' button to add a flash if the code is missing one."),
+                 p("The table will also be updated. Compare the minimum flash interval with the previous table."),
+                 img(src='table_with_error_fixed.png', height='50%', width='50%'),
+                 br(), br(),
+                 p("We can also use the 'add flash' button to add a flash into the plot if the function is not identifying 
+                   all flashes"),
                  br(), p("The radio buttons will select which of three functions to use on the audio
                          based on what type of flash pattern you belive it to be. The amplitude quantile
                          controls how loud a noise is before it is considered a flash; slight changes make a big
@@ -447,7 +452,9 @@ fileInput("file1", "Choose a .wav or .mp3 file",
                          is only relevant if the 'slow glow' function is being used, and should usually be made equal
                          to the 'amplitude quantile'. Species, sample#, site name, and temperature are not necessary
                          for the code to run, and are only there to make it easier to copy and paste the table to a spreadsheet.
-                         ")
+                         "),
+                 br(), br(),br(),br(),br(),br(),br(),br(),br(),br(),br()
+                 
                   ),
 
         tabPanel( "Run Flash Calculations",
@@ -455,19 +462,32 @@ fileInput("file1", "Choose a .wav or .mp3 file",
       plotOutput(outputId = "flashplot"),
       
       br(),
-      p("This is the output you get using the start and end times selected in the 'flash calculations' tab on the left.
-      You can supply the start and end times for the calculations, and the species, site and temperature in case you 
-      want to copy and paste the results into a spreadsheet"),
+      p("This plot shows the section of the audio chosen for analysis. If the single flash method was chosen their
+         will be red lines representing where flashes were detected. If the complex flash method was chosen there will 
+        be green and blue lines representing where flashes occured and what group they belong to. If glow method was chosen 
+        there will be a green line showing where the start of a flash is detected, and a red line showing where the end 
+        of the flash is detected."),
       tableOutput(outputId = "flash_stats"),
       
       br(),
       br(),
       p("This plot is of the audio used in the flash calculations, the red lines are where the r function believes a 
          flash occured"),
-      plotOutput(outputId = "resultsplot")),
+      plotOutput(outputId = "resultsplot"),
+      br(), br(),br(),br(),br(),br(),br(),br(),br(),br()),
       
       tabPanel("help info",
-               p("This will eventually provide detailed help documentation"))
+               p("This will eventually provide detailed help documentation")),
+      br(),
+      h4("Amplitude quantile:"), p("This is the quantile cutoff used for deciding when a flash occured. The default
+                                    is .999 meaning a noise must be above the 999th percentile to be considered a flash.
+                                    small changes can make a big difference. If a flash is not being detected, try 
+                                   decreasing the amplitude quantile by .005, and vice versa for a when to many non-flash 
+                                   noises are being falsely flagged as flashes. For the long flash/glow method, you will 
+                                   need to decrease the quantile to 0.9 or even lower. Sometimes no matter what value you 
+                                   use you will end up with a mix of false negatives and false positives, and this is where 
+                                   you will need to use the remove noise, and add flash options.")
+      
       ))
    )
   
@@ -720,5 +740,5 @@ shinyApp(ui = ui, server = server)
 # fix complex flash so that it allows user to specify interval to consider a grouping
 # fix bug where audio continues playing even after ui is removed
 # add detailed help
-runApp()
+
 
