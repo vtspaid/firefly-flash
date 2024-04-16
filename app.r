@@ -411,8 +411,6 @@ fileInput("file1", "Choose a .wav or .mp3 file",
                   h4("After reviewing the examples on this page move to the 'Run Flash Calculations' tab to run calculations
                    on your audio file"),
                   br(),
-                  p("One quick note, this page was put together before some updates were made to the code. That changed
-                  the figure appearances. so don't worry if you're figures don't look quite like these ones."),
                   br(),br(),
                   p("First use the browse button at the top left of the page to find and upload your audio file. 
                     File size is currently limited to 15 MB"),
