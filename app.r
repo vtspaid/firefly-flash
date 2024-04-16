@@ -472,7 +472,7 @@ fileInput("file1", "Choose a .wav or .mp3 file",
       plotOutput(outputId = "resultsplot"),
       br(), br(),br(),br(),br(),br(),br(),br(),br(),br()),
       
-      tabPanel("Details"),
+      tabPanel("Details",
       br(),br(),
       p("If you are viewing this page on the internet instead of running it locally from you machine, you should be aware
          that the web version is much slower than running it locally. Additionally the website is limited in the number 
@@ -498,7 +498,7 @@ fileInput("file1", "Choose a .wav or .mp3 file",
       h4("add flash/noise:"),
       p("This will add a flash at a specific location, if the function fails to detect. Currently this only works for quick 
         flashes. In the future I may add functionality for adding long, glow type flashes."),
-      br(), br(), br(), br(), br(), br(), br(), br(), br(), br(), br()
+      br(), br(), br(), br(), br(), br(), br(), br(), br(), br(), br())
       
       
       
