@@ -432,11 +432,11 @@ fileInput("file1", "Choose a .wav or .mp3 file",
                  p("It will also produce a table containing results"),
                  img(src='table_with_error.png', height='50%', width='50%'),
                  br(), br(),
-                 p("The red lines show you where the function believes flashes occurred. We see that there is
+                 p("The red lines are where the function detected a flash. We see that there is
                    an erroneous flash at around the 9 second mark in this example. We can use the 'remove noise'
                    button to supply a time range where we wish to remove all noise.
-                   In this example we would use 8.7 and 8.9. We can now run
-                   the function again and it will produce a plot like the one below. The table will also be updated."),
+                   In this example we would use 8.7 and 8.9. Running
+                   the function again will produce a plot like the one below."),
                   img(src='singleflash_witherror_fixed2.png', height='80%', width='80%'),
                  br(), br(),
                  p("The table will also be updated. Compare the minimum flash interval with the previous table."),
@@ -444,14 +444,12 @@ fileInput("file1", "Choose a .wav or .mp3 file",
                  br(), br(),
                  p("We can also use the 'add flash' button to add a flash into the plot if the function is not identifying 
                    all flashes"),
-                 br(), p("The radio buttons will select which of three functions to use on the audio
-                         based on what type of flash pattern you belive it to be. The amplitude quantile
+                 br(), p("The radio buttons will select which of three functions to use
+                         based on what type of flash pattern you recorded. The amplitude quantile
                          controls how loud a noise is before it is considered a flash; slight changes make a big
                          differences, best results tend to be between 0.995 and 0.999. The 'Group flashes if less than x seconds' only 
-                         comes into play when using the 'complex flash' function. The 'slowglow end quantile'
-                         is only relevant if the 'slow glow' function is being used, and should usually be made equal
-                         to the 'amplitude quantile'. Species, sample#, site name, and temperature are not necessary
-                         for the code to run, and are only there to make it easier to copy and paste the table to a spreadsheet.
+                         comes into play when using the 'complex flash' function, and sets the cut off point for when flashes will be 
+                         considered part of the same group.
                          "),
                  br(), br(),br(),br(),br(),br(),br(),br(),br(),br(),br()
                  
@@ -476,17 +474,35 @@ fileInput("file1", "Choose a .wav or .mp3 file",
       plotOutput(outputId = "resultsplot"),
       br(), br(),br(),br(),br(),br(),br(),br(),br(),br()),
       
-      tabPanel("help info",
-               p("This will eventually provide detailed help documentation")),
-      br(),
+      tabPanel("Details"),
+      br(),br(),
+      p("If you are viewing this page on the internet instead of running it locally from you machine, you should be aware
+         that the web version is much slower than running it locally. Additionally the website is limited in the number 
+        of hours it can run per month. If you are familiar with program R and have R studio on your machine, I recommend 
+        downloading the source code from git hub. https://github.com/vtspaid/firefly-flash."),
+      br(),br(),
       h4("Amplitude quantile:"), p("This is the quantile cutoff used for deciding when a flash occured. The default
                                     is .999 meaning a noise must be above the 999th percentile to be considered a flash.
                                     small changes can make a big difference. If a flash is not being detected, try 
                                    decreasing the amplitude quantile by .005, and vice versa for a when to many non-flash 
                                    noises are being falsely flagged as flashes. For the long flash/glow method, you will 
-                                   need to decrease the quantile to 0.9 or even lower. Sometimes no matter what value you 
-                                   use you will end up with a mix of false negatives and false positives, and this is where 
-                                   you will need to use the remove noise, and add flash options.")
+                                   need to decrease the quantile to 0.9 or even lower. Oftentimes you will end up with a 
+                                   mix of false negatives and false positives; this is where 
+                                   you will need to use the remove noise, and add flash options."),
+      br(),br(),
+      h4("remove noise/restore noise:"),
+      p("Hitting the remove noise button allows you to select a time range where you can set the amplitude to zero.
+         You can remove multiple sections at once. The 'restore noise' button will restore ALL sections of removed amplitude. 
+        If you wish to only remove one section, you will have to manually change the times. Note that if the remove noise button
+        is clicked more than 15 times in a session it will cause the shiny app to crash. Best practice is to refresh the page 
+        after completing analysis on an audio file, before importing another audio file."),
+      br(),br(),
+      h4("add flash/noise:"),
+      p("This will add a flash at a specific location, if the function fails to detect. Currently this only works for quick 
+        flashes. In the future I may add functionality for adding long, glow type flashes."),
+      br(), br(), br(), br(), br(), br(), br(), br(), br(), br(), br()
+      
+      
       
       ))
    )
@@ -731,14 +747,13 @@ server <- function(input, output, session) {
 shinyApp(ui = ui, server = server)
 #runApp("app.r")
 
+# to run app on your machine
+#runApp(appDir="C:/Users/xxx/xxx/app.r")
 
-# to deploy app
+# to deploy app (only for app developer)
 #library(rsconnect)
 #deployApp()
 
-#todo
-# fix complex flash so that it allows user to specify interval to consider a grouping
-# fix bug where audio continues playing even after ui is removed
-# add detailed help
+
 
 
