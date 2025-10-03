@@ -1,9 +1,14 @@
 
 library(dplyr)
-create_flash_array <- function(wav, 
-                               start = 0,
-                               end = length(wav@left) / wav@samp.rate,
+create_flash_array <- function(wav, # object of class wav, not a path
+                               start = 0, # time in secons to start analysis
+                               end = length(wav@left) / wav@samp.rate, # time in seconds
+                               freq_min = 1000,
+                               freq_max = 10000
                                ) {
+  
+  # remove frequency's outside of a range
+  wav <-  fir(flash, from = freq_min, to = freq_max, bandpass = TRUE, output = "Wave")
   
   # multiply the starting input by the sample rate to get starting frame
   starting = start * wav@samp.rate
@@ -40,7 +45,7 @@ singleflash <- function(wav,
   timeamp <- create_flash_array(wav = wav, start = start, end = end)
 
   # keep only amplitudes in the top quantile specified by the quant argument
-  timeamp <- timeamp[timeamp$Amp > quantile(timeamp$Amp, quant), ]
+  timeamp <- timeamp[timeamp$Amp > quantile(timeamp$Amp, quant, na.rm = TRUE), ]
   
   # get time difference between remaining high level amplitudes
   timeamp$timediff <- c(0, diff(timeamp$Time))
@@ -82,7 +87,7 @@ complexflash <- function(wav,
   timeamp <- create_flash_array(wav = wav, start = start, end = end)
   
   # keep only amplitudes in the top 1%
-  timeamp <- timeamp[timeamp$Amp > quantile(timeamp$Amp, quant), ]
+  timeamp <- timeamp[timeamp$Amp > quantile(timeamp$Amp, quant, na.rm = TRUE), ]
   
   # get time difference between remaining high level amplitudes
   timeamp$timediff <- c(0, diff(timeamp$Time))
@@ -153,13 +158,14 @@ slowglow <- function(wav, start=0,
   timeamp <- create_flash_array(wav = wav, start = start, end = end)
   
   # create a df of time and amplitude for ending time
-  endtimeamp <- data.frame(Time = timeArray, Amp = amp)
+  endtimeamp <- data.frame(Time = timeamp$Time, Amp =timeamp$Amp)
   
   # keep only amplitudes in the top quantile specified by the quant argument
-  timeamp <- timeamp[timeamp$Amp>quantile(timeamp$Amp, quant), ]
+  timeamp <- timeamp[timeamp$Amp > quantile(timeamp$Amp, quant, na.rm = TRUE), ]
   
   # keep only amplitudes above the endquant
-  endtimeamp <- endtimeamp[endtimeamp$Amp > quantile(endtimeamp$Amp, endquant),]
+  endtimeamp <- endtimeamp[endtimeamp$Amp > quantile(endtimeamp$Amp, 
+                                                     quant, na.rm = TRUE),]
   
   # get time difference between remaining high level amplitudes
   timeamp$timediff <-c(0, diff(timeamp$Time))
@@ -228,10 +234,11 @@ flashcheck <- function(wav, start = 0,
                        end = length(wav@left) / wav@samp.rate, quant=0.998) {
   
   # create time amp array
-  timeamp <- create_flash_array(wav = wav, start = start, end = end)
+  timeamp_df <- create_flash_array(wav = wav, start = start, end = end)
   
   # keep only amplitudes in the top 1%
-  timeamp <- timeamp[timeamp$Amp>quantile(timeamp$Amp, quant),]
+  timeamp <- timeamp_df[timeamp_df$Amp > quantile(timeamp_df$Amp, quant, 
+                                                  na.rm = TRUE),]
   
   # get time difference between remaining high level amplitudes
   timeamp$timediff <-c(0, diff(timeamp$Time))
@@ -245,11 +252,12 @@ flashcheck <- function(wav, start = 0,
   # find median Time of each sound grouping
   peak <- timeamp %>% group_by(grouping) %>% summarise(peakTime = median(Time))
   
-  flashcheck <- plot(x = timeArray, y = amp, type = 'l', col = 'black', 
+  flashcheck <- plot(x = timeamp_df$Time, 
+                     y = timeamp_df$Amp, type = 'l', col = 'black', 
                      xlab = 'Seconds', ylab = 'Amplitude', xaxt = "n")
-  axis(1, at = seq(1, round(max(timeArray)), by = 2), las=2)
+  axis(1, at = seq(1, round(max(timeamp_df$Time)), by = 2), las=2)
   abline(v=peak$peakTime, col = "red", lty = "dotted")
-  abline(h=quantile(timeamp$Amp, quant), col = "blue")
+  abline(h=quantile(timeamp$Amp, quant, na.rm = TRUE), col = "blue")
   
   return(flashcheck)
 }
@@ -260,10 +268,11 @@ complexcheck <- function(wav, start = 0,
                          quant=0.998) {
   
   # create time amp array
-  timeamp <- create_flash_array(wav = wav, start = start, end = end)
+  timeamp_df <- create_flash_array(wav = wav, start = start, end = end)
   
   # keep only amplitudes in the top 1%
-  timeamp <- timeamp[timeamp$Amp>quantile(timeamp$Amp, quant),]
+  timeamp <- timeamp_df[timeamp_df$Amp>quantile(timeamp_df$Amp, quant,
+                                                na.rm = TRUE),]
   
   # get time difference between remaining high level amplitudes
   timeamp$timediff <-c(0, diff(timeamp$Time))
@@ -289,14 +298,15 @@ complexcheck <- function(wav, start = 0,
     mutate(grouping = cumsum(samegroup)+1)
   
   
-  flashcheck <- plot(x = timeArray, y = amp, type = 'l', col = 'black',
+  flashcheck <- plot(x = timeamp_df$Time, y = timeamp_df$Amp, type = 'l', 
+                     col = 'black',
                      xlab = 'Seconds', ylab = 'Amplitude', xaxt="n")
   
-  axis(1, at = seq(1, round(max(timeArray)), by = 2), las = 2)
+  axis(1, at = seq(1, round(max(timeamp$Time)), by = 2), las = 2)
   
   segments(x0 = peak$peakTime, 
            x1 = peak$peakTime, 
-           y0 = min(FLASH@left), 
+           y0 = min(wav@left), 
            y1 = 0, 
            col = rep(c("blue", "red"), 
                      length(unique(peak$grouping)  /2))[peak$grouping])
@@ -307,19 +317,22 @@ complexcheck <- function(wav, start = 0,
 
 glowcheck <- function(wav, start = 0, 
                       end = length(wav@left) / wav@samp.rate, 
-                      quant = 0.998, endquant = 0.997) {
+                      quant = 0.998, endquant = quant) {
   
   # create time amp array
-  timeamp <- create_flash_array(wav = wav, start = start, end = end)
+  timeamp_df <- create_flash_array(wav = wav, start = start, end = end)
   
   # create a df of time and amplitude for ending time
-  endtimeamp <- create_flash_array(wav = wav, start = start, end = end)
+  endtimeamp_df <- create_flash_array(wav = wav, start = start, end = end)
   
   # keep only amplitudes in the top 1%
-  timeamp <- timeamp[timeamp$Amp>quantile(timeamp$Amp, quant), ]
+  timeamp <- timeamp_df[timeamp_df$Amp>quantile(timeamp_df$Amp, quant,
+                                                na.rm = TRUE), ]
   
   # keep only amplitudes above the endquant
-  endtimeamp <- endtimeamp[endtimeamp$Amp > quantile(endtimeamp$Amp, endquant),]
+  endtimeamp <- endtimeamp_df[endtimeamp_df$Amp > 
+                                quantile(endtimeamp_df$Amp, endquant,
+                                         na.rm = TRUE),]
   
   # get time difference between remaining high level amplitudes
   timeamp$timediff <-c(0, diff(timeamp$Time))
@@ -362,16 +375,15 @@ glowcheck <- function(wav, start = 0,
   # get pause length
   glowtimes$pause <- glowtimes$start-glowtimes$last_end
   
-
-  flashcheck <- plot(x = timeArray, y = amp, type = 'l', col = 'black', 
-                     xlab = 'Seconds', ylab = 'Amplitude', xaxt = "n")
-  axis(1, at = seq(1, round(max(timeArray)), by = 2), las=2)
-  segments(x0 = glowtimes$start, x1 = glowtimes$start, y0 = min(FLASH@left), 
+  timeamp_df <- timeamp_df[seq(1, nrow(timeamp_df), 2), ]
+  plot(x = timeamp_df$Time, y = timeamp_df$Amp, 
+       type = 'l', col = 'black', 
+       xlab = 'Seconds', ylab = 'Amplitude', xaxt = "n")
+  axis(1, at = seq(1, round(max(timeamp_df$Time)), by = 2), las=2)
+  segments(x0 = glowtimes$start, x1 = glowtimes$start, y0 = min(wav@left), 
            y1 = 0, 
            col="green")
-  segments(x0 = glowtimes$end, x1 = glowtimes$end, y0 = min(FLASH@left), y1 = 0, 
+  segments(x0 = glowtimes$end, x1 = glowtimes$end, y0 = min(wav@left), y1 = 0, 
            col="red")
-  
-  return(flashcheck)
 }
 

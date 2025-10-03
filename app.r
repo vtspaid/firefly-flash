@@ -1,7 +1,7 @@
 ### Code for creating shiny app that calculates statistics for firefly flashes ###
 
 #load necessary packages
-#library(shiny)
+library(shiny)
 library(tuneR)
 library(dplyr)
 library(base64enc)
@@ -9,12 +9,14 @@ library(howler)
 library(shinyjs)
 
 
-##### create two custom functions needed #####
+##### create a custom function needed later #####
+signcheck <- function(x){sum(sign(x) != lag(sign(x)), na.rm=T)}
 
+# create functions for analyzing flash patterns
 singleflash <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.998){
-  starting=start*wav@samp.rate+0.01 # multiply the starting input by the sample rate to get starting frame
-  ending=end*wav@samp.rate # get ending frame
-  amp<-wav@left[starting:ending] # creates a vector of amplitudes using provided start and end times
+  starting = start*wav@samp.rate+0.01 # multiply the starting input by the sample rate to get starting frame
+  ending = end*wav@samp.rate # get ending frame
+  amp <- wav@left[starting:ending] # creates a vector of amplitudes using provided start and end times
   
   #create time array by dividing the current frame by the sample rate and adding the initial start time
   timeArray <- ((0:(length(amp)-1)) / wav@samp.rate)+start
@@ -24,7 +26,7 @@ singleflash <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=
   
   # keep only amplitudes in the top 1%
   timeamp <- timeamp[abs(timeamp$Amp) > quantile(timeamp$Amp, quant),]
-  
+
   # get time difference between remaining high level amplitudes
   timeamp$timediff <- c(0, diff(timeamp$Time))
   
@@ -46,7 +48,7 @@ singleflash <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=
   
 }
 
-complexflash <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.998, pause=NA){
+complexflash <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.998, pause = 1){
   starting=start*wav@samp.rate+0.01 # multiply the starting input by the sample rate to get starting frame
   ending=end*wav@samp.rate # get ending frame
   amp<-wav@left[starting:ending] # creates a vector of amplitudes using provided start and end times
@@ -59,7 +61,7 @@ complexflash <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant
   
   # keep only amplitudes in the top 1%
   timeamp <- timeamp[abs(timeamp$Amp) > quantile(timeamp$Amp, quant),]
-  
+
   # get time difference between remaining high level amplitudes
   timeamp$timediff <- c(0, diff(timeamp$Time))
   
@@ -107,7 +109,7 @@ complexflash <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant
   
 }
 
-slowglow <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.98){
+slowglow <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.98, freq = 9){
   starting=start*wav@samp.rate+.01 # multiply the starting input by the sample rate to get starting frame
   ending=end*wav@samp.rate # get ending frame
   amp<-wav@left[starting:ending] # creates a vector of amplitudes using provided start and end times
@@ -118,30 +120,22 @@ slowglow <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.9
   #create dataframe of time and amplitude for starting time
   timeamp  <- data.frame(Time=timeArray, Amp=amp)
   
-  # create a df of time and amplitude for ending time
-  endtimeamp <- data.frame(Time=timeArray, Amp=amp)
+  # create frequency column
+  timeamp$freq <- zoo::rollapply(timeamp$Amp, FUN = signcheck, width = wav@samp.rate/100, by = 10, 
+                                fill = c("extend", "extend", "extend"))
   
   # keep only amplitudes in the top 1%
   timeamp <- timeamp[abs(timeamp$Amp) > quantile(timeamp$Amp, quant),]
   
-  # keep only amplitudes above the quant
-  endtimeamp <- endtimeamp[abs(endtimeamp$Amp) > quantile(endtimeamp$Amp, quant),]
-  
+  # remove variances in the bottom 2%
+  timeamp <- timeamp[timeamp$freq > freq,]
+
   # get time difference between remaining high level amplitudes
   timeamp$timediff <-c(0, diff(timeamp$Time))
-  
-  # get time difference between remaining high level amplitudes
-  endtimeamp$timediff <-c(0, diff(endtimeamp$Time))
-  
+
   # create groups based on the difference in time. If the difference in time is less than .3 sec
   # then it will be placed in the same sound group.
-  timeamp <- timeamp %>% mutate(sameflash = ifelse(timediff < .3, 0, 1))%>% 
-    mutate(sameflash = replace(sameflash, is.na(sameflash), 1)) %>%
-    mutate(grouping = cumsum(sameflash))
-  
-  # create groups based on the difference in time. If the difference in time is less than .3 sec
-  # then it will be placed in the same sound group.
-  endtimeamp <- endtimeamp %>% mutate(sameflash = ifelse(timediff < .3, 0, 1))%>% 
+  timeamp <- timeamp %>% mutate(sameflash = ifelse(timediff < 0.3, 0, 1))%>% 
     mutate(sameflash = replace(sameflash, is.na(sameflash), 1)) %>%
     mutate(grouping = cumsum(sameflash))
   
@@ -149,7 +143,7 @@ slowglow <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.9
   glowstart <- timeamp %>% group_by(grouping) %>% summarise(start=min(Time))
   
   # get glow end times
-  glowend <- endtimeamp %>% group_by(grouping) %>% summarise(end=max(Time))
+  glowend <- timeamp %>% group_by(grouping) %>% summarise(end=max(Time))
   
   # merge start and end times
   glowtimes <- merge(glowstart, glowend, by = "grouping")
@@ -191,10 +185,10 @@ flashcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0
   
   #create dataframe of time and amplitude
   timeamp  <-data.frame(Time=timeArray, Amp=amp)
-  
+
   # keep only amplitudes in the top 1%
   timeamp <- timeamp[abs(timeamp$Amp) > quantile(timeamp$Amp, quant),]
-  
+
   # get time difference between remaining high level amplitudes
   timeamp$timediff <-c(0, diff(timeamp$Time))
   
@@ -215,7 +209,7 @@ flashcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0
   return(flashcheck)
 }
 
-complexflashcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.998, pause=NA){
+complexflashcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.998, pause=1){
   starting=start*wav@samp.rate+1 # converts seconds into the correct sample number (have to add 1 or default would be invalid)
   ending=end*wav@samp.rate
   amp<-wav@left[starting:ending] # creates a vector of amplitudes using provided start and end times
@@ -263,7 +257,7 @@ complexflashcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, 
   return(flashcheck)
 }
 
-glowcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.98){
+glowcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.98, freq = 9){
   starting=start*wav@samp.rate+1 # converts seconds into the correct sample number (have to add 1 or default would be invalid)
   ending=end*wav@samp.rate
   amp<-wav@left[starting:ending] # creates a vector of amplitudes using provided start and end times
@@ -274,20 +268,18 @@ glowcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.
   #create dataframe of time and amplitude for starting time
   timeamp  <-data.frame(Time=timeArray, Amp=amp)
   
-  # create a df of time and amplitude for ending time
-  endtimeamp <- data.frame(Time=timeArray, Amp=amp)
-  
+  # add variance
+  timeamp$freq <- zoo::rollapply(timeamp$Amp, FUN = signcheck, width = wav@samp.rate/100, by = 10, 
+                                fill = c("extend", "extend", "extend"))
+
   # keep only amplitudes in the top 1%
   timeamp <- timeamp[abs(timeamp$Amp) > quantile(timeamp$Amp, quant),]
   
-  # keep only amplitudes above the quant
-  endtimeamp <- endtimeamp[endtimeamp$Amp > quantile(endtimeamp$Amp, quant),]
-  
+  # remove variances in the bottom 2%
+  timeamp <- timeamp[timeamp$freq > freq,]
+
   # get time difference between remaining high level amplitudes
   timeamp$timediff <-c(0, diff(timeamp$Time))
-  
-  # get time difference between remaining high level amplitudes
-  endtimeamp$timediff <-c(0, diff(endtimeamp$Time))
   
   # create groups based on the difference in time. If the difference in time is less than .1 sec
   # then it will be placed in the same sound group.
@@ -295,17 +287,11 @@ glowcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.
     mutate(sameflash = replace(sameflash, is.na(sameflash), 1)) %>%
     mutate(grouping = cumsum(sameflash))
   
-  # create groups based on the difference in time. If the difference in time is less than .1 sec
-  # then it will be placed in the same sound group.
-  endtimeamp <- endtimeamp %>% mutate(sameflash = ifelse(timediff < .3, 0, 1))%>% 
-    mutate(sameflash = replace(sameflash, is.na(sameflash), 1)) %>%
-    mutate(grouping = cumsum(sameflash))
-  
   # get glow start times
   glowstart <- timeamp %>% group_by(grouping) %>% summarise(start=min(Time))
   
   # get glow end times
-  glowend <- endtimeamp %>% group_by(grouping) %>% summarise(end=max(Time))
+  glowend <- timeamp %>% group_by(grouping) %>% summarise(end=max(Time))
   
   # merge start and end times
   glowtimes <- merge(glowstart, glowend, by = "grouping")
@@ -327,12 +313,15 @@ glowcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.
   
   flashcheck <- plot(x=timeArray, y=amp, type='l',
                      col='black', xlab='Seconds', ylab='Amplitude', xaxt="n")
-  axis(1, at = seq(1, round(max(timeArray)), by = 2), las=2)
-  segments(x0 = glowtimes$start, x1 = glowtimes$start, y0=min(wav@left), y1=0, 
+  axis(1, at = seq(1, round(max(timeArray)), by = 1), las=2)
+  segments(x0 = glowtimes$start, x1 = glowtimes$start, y0 = min(wav@left), y1 = max(wav@left), 
            col="green")
-  segments(x0 = glowtimes$end, x1 = glowtimes$end, y0=min(wav@left), y1=0, 
+  segments(x0 = glowtimes$end, x1 = glowtimes$end, y0 = min(wav@left), y1 = max(wav@left), 
            col="red")
-  
+  segments(x0 = min(timeArray), x1 = max(timeArray), 
+           y0 = quantile(timeamp$Amp, quant), y1 = quantile(timeamp$Amp, quant), col = "blue")
+  segments(x0 = min(timeArray), x1 = max(timeArray), 
+           y0 = -quantile(timeamp$Amp, quant), y1 = -quantile(timeamp$Amp, quant), col = "blue") 
   
   
   return(flashcheck)
@@ -359,8 +348,6 @@ ui <- fluidPage(
 fileInput("file1", "Choose a .wav or .mp3 file",
             accept = c(".wav", ".mp3")), 
  
-  
-  # tags$div(img(src='potomaca_pic.png', height='10%', width='10%', style="position:absolute; top:0px; right:0")),
 
   # Sidebar layout with input and output definitions ----
     sidebarPanel(
@@ -369,6 +356,7 @@ fileInput("file1", "Choose a .wav or .mp3 file",
                   # the next two lines are inputs for the xlim of the audio plot. The end gets updated later
                   numericInput("start", "plot start time", value = 0, min = 0, max = 10000),
                   numericInput("end", "plot end time", value = 10, min = 1, max = 10000),
+                 actionButton("plotaudio", "Plot audio"),
 
         actionButton("AUDIO2", "Play audio"),
         actionButton("clearaudio", "Remove audio player")),
@@ -378,7 +366,8 @@ fileInput("file1", "Choose a .wav or .mp3 file",
                  numericInput("tstart", "start time", value = 0, min = 1, max = 30), # start time of recording to use
                  numericInput("tend", "end time", value = 10, min = 1, max = 10000), # end time of recording to use
                  numericInput("quant", "amplitude quantile", value=0.999, min=0.85, max=1, step = 0.001), # quantile to use for amplitude cutoff
-                 numericInput("pause", "Group flashes if less than x seconds", value=1, min=0, max=100, step=0.1),
+                 numericInput("freq", "frequency (slow glow only)", value = 9, min = 0, max = 25, step = 1), # frequency to use as cutoff
+                 numericInput("pause", "Group flashes if less than x seconds (complex flash only)", value=1, min=0, max=100, step=0.1),
                  #textInput("species", "species", value = "", width = NULL, placeholder = NULL), # set species
                  #numericInput("sample", "sample #", value = 1, min=1, max = 100000), # set sample number
                  #textInput("site", "site name", value = "", width = NULL, placeholder = NULL), # set site
@@ -517,12 +506,11 @@ server <- function(input, output, session) {
   FLASH <- reactive({
     req(input$file1)
     infile <- input$file1
-    # if (is.null(infile)) {
-    #   return(NULL)
-    # }
+    
     audio <- if(grepl('.*\\.wav', ignore.case=TRUE, infile$datapath)) {readWave(infile$datapath)} else
-      {readMP3(infile$datapath)}
-   # audio <- readWave(infile$datapath)
+    {readMP3(infile$datapath)}
+    audio@left <- audio@left[seq(1, length(audio@left), by =4)]
+    audio@samp.rate <- audio@samp.rate/4
     return(audio)
   }) 
 
@@ -638,20 +626,17 @@ server <- function(input, output, session) {
   
   # create plot of overall audio file
   output$flashplot <- renderPlot({
+    req(input$plotaudio)
     train_audio = FLASH()
-    str(train_audio)
-    s1 <- train_audio/2^(train_audio@bit -1)
     timeArray <- (0:(length(train_audio@left)-1)) / train_audio@samp.rate
     #Plot the wave
-    plot(x=timeArray, y=train_audio@left, type='l',
-         col='black', xlab='Seconds', ylab='Amplitude', xlim=c(input$start, input$end))
+    isolate(plot(x=timeArray, y=train_audio@left, type='l',
+         col='black', xlab='Seconds', ylab='Amplitude', xlim=c(input$start, input$end)))
     
   })
 
-  # single flash
   # create table of flash statistics
   output$flash_stats  <- renderTable({
-    input$flash_calc
     req(input$flash_calc)
     req(input$file1)
     dfflash <- FLASH()
@@ -692,7 +677,7 @@ server <- function(input, output, session) {
                                 quant=input$quant
       )
     } else {slowglow(dfflash,
-                                 start=input$tstart, end=input$tend, quant=input$quant
+                                 start=input$tstart, end=input$tend, quant=input$quant, freq = input$freq
     )})
 
             
@@ -700,7 +685,6 @@ server <- function(input, output, session) {
 
   # create plot checking where the code thinks the flashes are
   output$resultsplot <- renderPlot({
-    input$flash_calc
     req(input$flash_calc)
     req(input$file1)
     df2 <- FLASH()
@@ -734,7 +718,7 @@ server <- function(input, output, session) {
       flashcheck(df2, start=input$tstart, end=input$tend, quant=input$quant)
     } else if (input$flashtype == 'complex flash'){
       complexflashcheck(df2, start=input$tstart, end=input$tend, quant=input$quant, pause=input$pause)
-    } else {glowcheck(df2, start=input$tstart, end=input$tend, quant=input$quant)})
+    } else {glowcheck(df2, start=input$tstart, end=input$tend, quant=input$quant, freq = input$freq)})
 
   })
   
