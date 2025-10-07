@@ -12,7 +12,8 @@ library(shinyjs)
 source("www/R/flash_functions.R")
 source("www/R/example_text.R")
 source("www/R/module/InputFileMod.R")
-source("www/R/module/viewPlotMod.R")
+source("www/R/module/ListenMod.R")
+source("www/R/module/ViewerMod.R")
 
 # UI ---------------------------
 ui <- fluidPage(
@@ -37,7 +38,7 @@ InputFileUI("GrabFile"),
       tabsetPanel(
         tabPanel("Plot start and end times",
                   # The next two lines are inputs for the xlim of the audio plot. The end gets updated later
-                  ViewPlotUI("viewplot")
+                 ListenUI("viewplot")
                  ),
 
       
@@ -72,8 +73,9 @@ InputFileUI("GrabFile"),
                   ),
 
         tabPanel( "Run Flash Calculations",
-      p("This plot is controlled by the 'plot times' tab on the left. It is purely for visulization of the audio"),
-      plotOutput(outputId = "flashplot"),
+                  ViewerUI("fullview"),
+      # p("This plot is controlled by the 'plot times' tab on the left. It is purely for visulization of the audio"),
+      # plotOutput(outputId = "flashplot"),
       
       br(),
       flash_stats_text,
@@ -105,8 +107,11 @@ server <- function(input, output, session) {
   FLASH <- InputFileServer("GrabFile")
 
   # Insert audio UI
-  ViewPlotServer("viewplot", FLASH, input[["GrabFile-inputfile"]])
+  xlims <- ListenServer("viewplot", FLASH, input)
   
+  observeEvent(input[["GrabFile-inputfile"]], {
+    print("How about this")
+  })
   # Initilize a reactive value for removing noise
   counter <- reactiveValues(countervalue = 0)
   
@@ -190,34 +195,8 @@ server <- function(input, output, session) {
     
   })
   
-  # Update max length of file
-  observeEvent(input[["GrabFile-inputfile"]], {
-    print("trying")
-    req(FLASH())
-    req(FLASH()$audio@left)
-    req(FLASH()$audio@samp.rate)
-    
-    print("starting to update max")
-    duration <- length(FLASH()$audio@left) / FLASH()$audio@samp.rate
-    updateNumericInput(session, "end", value = duration, max = duration)
-    updateNumericInput(session, "tend", value = duration, max = duration)
-    print("finished update max")
-  })
-  
   # Create plot of overall audio file
-  output$flashplot <- renderPlot({
-    print("starting_plot")
-    print("input names")
-    print(names(input))
-    req(FLASH())
-    req(input$plotaudio)
-    train_audio = FLASH()$audio
-    timeArray <- (0:(length(train_audio@left)-1)) / train_audio@samp.rate
-    # Plot the wave
-    isolate(plot(x=timeArray, y=train_audio@left, type='l',
-         col='black', xlab='Seconds', ylab='Amplitude', xlim=c(input$start, input$end)))
-    
-  })
+  ViewerServer("fullview", FLASH, input, xlims)
 
   # Create table of flash statistics
   output$flash_stats  <- renderTable({
