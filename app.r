@@ -12,6 +12,7 @@ library(shinyjs)
 source("www/R/flash_functions.R")
 source("www/R/example_text.R")
 source("www/R/module/InputFileMod.R")
+source("www/R/module/viewPlotMod.R")
 
 # UI ---------------------------
 ui <- fluidPage(
@@ -36,12 +37,8 @@ InputFileUI("GrabFile"),
       tabsetPanel(
         tabPanel("Plot start and end times",
                   # The next two lines are inputs for the xlim of the audio plot. The end gets updated later
-                  numericInput("start", "plot start time", value = 0, min = 0, max = 10000),
-                  numericInput("end", "plot end time", value = 10, min = 1, max = 10000),
-                 actionButton("plotaudio", "Plot audio"),
-
-        actionButton("AUDIO2", "Play audio"),
-        actionButton("clearaudio", "Remove audio player")),
+                  ViewPlotUI("viewplot")
+                 ),
 
       
         tabPanel("Flash calculations",
@@ -108,22 +105,7 @@ server <- function(input, output, session) {
   FLASH <- InputFileServer("GrabFile")
 
   # Insert audio UI
-  observeEvent(input$AUDIO2, {
-    req(FLASH())
-    req(input[["GrabFile-inputfile"]])
-    base64 <- dataURI(file = FLASH()$file, mime = "audio/wav")
-     insertUI(selector = '#AUDIO2', where = 'afterEnd',
-    ui = tags$div(id = "howleraudio", howler::howlerModuleUI(
-      id = "sound",
-      files = list("imported audio" = base64)
-      )
-    ))
-    })
-  
-  # Remove audio UI
-  observeEvent(input$clearaudio, {
-    removeUI( selector ="#howleraudio", immediate = T)
-  })
+  ViewPlotServer("viewplot", FLASH, input[["GrabFile-inputfile"]])
   
   # Initilize a reactive value for removing noise
   counter <- reactiveValues(countervalue = 0)
@@ -208,7 +190,7 @@ server <- function(input, output, session) {
     
   })
   
-  
+  # Update max length of file
   observeEvent(input[["GrabFile-inputfile"]], {
     print("trying")
     req(FLASH())
@@ -221,6 +203,7 @@ server <- function(input, output, session) {
     updateNumericInput(session, "tend", value = duration, max = duration)
     print("finished update max")
   })
+  
   # Create plot of overall audio file
   output$flashplot <- renderPlot({
     print("starting_plot")

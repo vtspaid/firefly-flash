@@ -17,12 +17,10 @@ InputFileServer <- function(id) {
         audio <- readMP3(infile$datapath)
       }
       audio <- Wave(left = audio@left[seq(1, length(audio@left), by = 4)],
-      samp.rate = audio@samp.rate / 4, bit = 16)
+                    samp.rate = audio@samp.rate / 4, bit = 16)
       data <- list(file = input$inputfile$datapath,
-                audio = audio)
+                   audio = audio)
       print("ending infile server")
-      str(data)
-      names(data)
       data
       })
   })
