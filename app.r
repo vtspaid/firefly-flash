@@ -110,7 +110,7 @@ server <- function(input, output, session) {
   # Insert audio UI
   observeEvent(input$AUDIO2, {
     req(FLASH())
-    req( input$GrabFile_inputfile)
+    req(input[["GrabFile-inputfile"]])
     base64 <- dataURI(file = FLASH()$file, mime = "audio/wav")
      insertUI(selector = '#AUDIO2', where = 'afterEnd',
     ui = tags$div(id = "howleraudio", howler::howlerModuleUI(
@@ -209,28 +209,14 @@ server <- function(input, output, session) {
   })
   
   
-  # Make max length input reactive to file input 
-  # observe({
-  #   print("starting to update max")
-  #   req(FLASH()$left)
-  #   req(FLASH()$samp.rate)
-  #   print("printingstuff")
-  #   print(FLASH()$left)
-  #   updateNumericInput(session, "end",
-  #                      value = length(FLASH()$left)/FLASH()$samp.rate,
-  #                      max = length(FLASH()$left)/FLASH()$samp.rate)
-  #   updateNumericInput(session, "tend",
-  #                      value = length(FLASH()$left)/FLASH()$samp.rate,
-  #                      max = length(FLASH()$left)/FLASH()$samp.rate)
-  #   print("finished update max")
-  # })
-  observeEvent(input$GrabFile_inputfile, {
+  observeEvent(input[["GrabFile-inputfile"]], {
+    print("trying")
     req(FLASH())
-    req(FLASH()$left)
-    req(FLASH()$samp.rate)
+    req(FLASH()$audio@left)
+    req(FLASH()$audio@samp.rate)
     
     print("starting to update max")
-    duration <- length(FLASH()$left) / FLASH()$samp.rate
+    duration <- length(FLASH()$audio@left) / FLASH()$audio@samp.rate
     updateNumericInput(session, "end", value = duration, max = duration)
     updateNumericInput(session, "tend", value = duration, max = duration)
     print("finished update max")
@@ -238,12 +224,14 @@ server <- function(input, output, session) {
   # Create plot of overall audio file
   output$flashplot <- renderPlot({
     print("starting_plot")
+    print("input names")
+    print(names(input))
     req(FLASH())
     req(input$plotaudio)
-    train_audio = FLASH()
-    timeArray <- (0:(length(train_audio$left)-1)) / train_audio$samp.rate
+    train_audio = FLASH()$audio
+    timeArray <- (0:(length(train_audio@left)-1)) / train_audio@samp.rate
     # Plot the wave
-    isolate(plot(x=timeArray, y=train_audio$left, type='l',
+    isolate(plot(x=timeArray, y=train_audio@left, type='l',
          col='black', xlab='Seconds', ylab='Amplitude', xlim=c(input$start, input$end)))
     
   })
@@ -253,7 +241,7 @@ server <- function(input, output, session) {
     req(FLASH())
     req(input$flash_calc)
     dfflash <- FLASH()$audio
-    samprate <- FLASH()$samp.rate
+    samprate <- FLASH()$audio@samp.rate
     
     # Remove flash
     isolate(if(counter$countervalue > 0) 
@@ -300,9 +288,9 @@ server <- function(input, output, session) {
   output$resultsplot <- renderPlot({
     req(FLASH())
     req(input$flash_calc)
-    req(input$GrabFile_inputfile)
+    req(input[["GrabFile-inputfile"]])
     df2 <- FLASH()$audio
-    samprate <- FLASH()$samp.rate
+    samprate <- FLASH()$audio@samp.rate
     # Remove flash
     isolate(if(counter$countervalue > 0) 
       {rm_times <- lapply(1:counter$countervalue, function(x) 

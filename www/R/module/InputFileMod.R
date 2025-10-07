@@ -10,14 +10,16 @@ InputFileServer <- function(id) {
     reactive({
     print("starting infile server")
       infile <- input$inputfile
+      print(infile)
       if(grepl('.*\\.wav', ignore.case=TRUE, infile$datapath)) {
-        audio <-readWave(infile$datapath)
+        audio <- readWave(infile$datapath)
       } else {
         audio <- readMP3(infile$datapath)
       }
+      audio <- Wave(left = audio@left[seq(1, length(audio@left), by = 4)],
+      samp.rate = audio@samp.rate / 4, bit = 16)
       data <- list(file = input$inputfile$datapath,
-                left = audio@left[seq(1, length(audio@left), by = 4)],
-                samp.rate = audio@samp.rate / 4)
+                audio = audio)
       print("ending infile server")
       str(data)
       names(data)
