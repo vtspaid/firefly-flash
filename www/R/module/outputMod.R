@@ -10,12 +10,11 @@ OutputUI <- function(id) {
     p("This plot is of the audio used in the flash calculations, the red lines 
     are where the r function believes a flash occured"),
     plotOutput(ns("resultsplot")),
-    br(), br(), br(),br(),br(),br(),br(),br(),br(),br()
+    br(), br(), br(), br(), br(), br(), br(), br(), br(), br()
   )
 }
 
-OutputServer <- function(id, input2, FLASH, counter, counterflash, flashtype,
-                         controls) {
+OutputServer <- function(id, input2, flash, app_values) {
   moduleServer(
     id,
     function(input, output, session) {
@@ -24,48 +23,55 @@ OutputServer <- function(id, input2, FLASH, counter, counterflash, flashtype,
                                    data = NA)
       
       observeEvent(input2[["controls-flash_calc"]], {
-        req(FLASH())
-        dfflash <- FLASH()$audio
-        samprate <- FLASH()$audio@samp.rate
-        print(flashtype$flashtype)
+        req(flash())
+        dfflash <- flash()$audio
+        samprate <- flash()$audio@samp.rate
+        print(app_values$flashtype)
         # Remove flash
         
-        if(counter$countervalue > 0) {
-          rm_times <- lapply(1:counter$countervalue, function(x) 
+        if (app_values$countervalue > 0) {
+          rm_times <- lapply(1:app_values$countervalue, function(x) {
             data.frame(start = input2[[paste0("controls-rmstart", x)]],
                        end = input2[[paste0("controls-rmend", x)]])
+          }
           )
           
-          for (ii in 1:length(rm_times)){
-            dfflash@left[(rm_times[[ii]]$start*samprate):(rm_times[[ii]]$end*samprate)] <- 0
+          for (ii in seq_along(rm_times)){
+            dfflash@left[(rm_times[[ii]]$start * samprate):
+                           (rm_times[[ii]]$end * samprate)] <- 0
           }
         }
         
         # Add flash
-        if(counterflash$countervalue > 0) {
-          add_times <- lapply(1:counterflash$countervalue, function(x) 
-          data.frame(newflash = input2[[paste0("controls-added", x)]])
-        )
-        for (ii in 1:length(add_times)) {
-            dfflash@left[add_times[[ii]]$newflash*samprate] <- quantile(dfflash@left, controls$quant) + 1
-        }
+        if (app_values$addcounter > 0) {
+          add_times <- lapply(1:app_values$countervalue, function(x) 
+            data.frame(newflash = input2[[paste0("controls-added", x)]])
+          )
+          for (ii in seq_along(add_times)) {
+            dfflash@left[add_times[[ii]]$newflash * samprate] <- 
+              quantile(dfflash@left, app_values$quant) + 1
+          }
         }
         print("did we get here")
         # Render table
         flash_data$data <- dfflash
-        if (flashtype$flashtype == 'single flash') {
+        if (app_values$flashtype == "single flash") {
           flash_data$flash_table <- singleflash(dfflash,
-                      start=controls$tstart, end=controls$tend, quant=controls$quant)
-        } else if (flashtype$flashtype == 'complex flash') {
+                                                start = app_values$tstart, 
+                                                end = app_values$tend, 
+                                                quant = app_values$quant)
+        } else if (app_values$flashtype == "complex flas") {
           flash_data$flash_table <- complexflash(dfflash,
-                       start=controls$tstart, end=controls$tend, pause=controls$pause, 
-                       quant=controls$quant)
+                                                 start = app_values$tstart, 
+                                                 end = app_values$tend, 
+                                                 pause = app_values$pause, 
+                                                 quant = app_values$quant)
         } else {
           flash_data$flash_table <- slowglow(dfflash,
-                         start = controls$tstart, end = controls$tend, 
-                         quant = controls$quant, freq = controls$freq)
+                                             start = app_values$tstart, end = app_values$tend, 
+                                             quant = app_values$quant, freq = app_values$freq)
         }
-    
+        
       })
       
       output$flash_stats <- renderTable({
@@ -78,16 +84,24 @@ OutputServer <- function(id, input2, FLASH, counter, counterflash, flashtype,
         print("does this ever run")
         req(flash_data$data)
         req(input2[["controls-flash_calc"]])
-        if (flashtype$flashtype == 'single flash') {
-              flashcheck(flash_data$data, start=controls$tstart, end=controls$tend, quant=controls$quant)
-            } else if (flashtype$flashtype == 'complex flash') {
-              complexflashcheck(flash_data$data, start=controls$tstart, end=controls$tend, quant=controls$quant, pause=controls$pause)
-            } else {
-              glowcheck(flash_data$data, 
-                        start=controls$tstart, 
-                        end = controls$tend, 
-                        quant = controls$quant, freq = controls$freq)
-              }
+        if (app_values$flashtype == "single flash") {
+          flashcheck(flash_data$data, 
+                     start = app_values$tstart, 
+                     end = app_values$tend, 
+                     quant = app_values$quant)
+        } else if (app_values$flashtype == "complex flash") {
+          complexflashcheck(flash_data$data, 
+                            start = app_values$tstart, 
+                            end = app_values$tend,
+                            quant = app_values$quant,
+                            pause = app_values$pause)
+        } else {
+          glowcheck(flash_data$data, 
+                    start = app_values$tstart, 
+                    end = app_values$tend, 
+                    quant = app_values$quant, 
+                    freq = app_values$freq)
+        }
       })
     }
   )

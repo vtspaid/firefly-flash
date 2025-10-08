@@ -5,6 +5,12 @@
   margin: 0pt -15pt 10pt -15px;
 }
 
+.myheader h2 {
+  font-weight: bold;
+  font-size: 30pt;
+  text-align:center;
+}
+
 .holdertest {
   color:#b3f2c4 #BDF5BD #d2f7dc;
 }
