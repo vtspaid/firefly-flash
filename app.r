@@ -100,7 +100,7 @@ server <- function(input, output, session) {
                              tend = 30, 
                              pause = 1, 
                              quant = 0.999,
-                             frequency = 1)
+                             freq = 9)
   
   ControllerServer("controls", counter, counterflash, flashtype, controls)
   

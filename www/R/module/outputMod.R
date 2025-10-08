@@ -54,20 +54,18 @@ OutputServer <- function(id, input2, FLASH, counter, counterflash, flashtype,
         print("did we get here")
         # Render table
         flash_data$data <- dfflash
-        isolate(if (flashtype$flashtype == 'single flash') {
+        if (flashtype$flashtype == 'single flash') {
           flash_data$flash_table <- singleflash(dfflash,
-                      start=controls$tstart, end=controls$tend, quant=controls$quant
-          )
-        } else if (flashtype$flashtype == 'complex flash'){
+                      start=controls$tstart, end=controls$tend, quant=controls$quant)
+        } else if (flashtype$flashtype == 'complex flash') {
           flash_data$flash_table <- complexflash(dfflash,
                        start=controls$tstart, end=controls$tend, pause=controls$pause, 
-                       quant=controls$quant
-          )
+                       quant=controls$quant)
         } else {
           flash_data$flash_table <- slowglow(dfflash,
-                         start=controls$tstart, end=controls$tend, 
-                         quant=controls$quant, freq = controls$freq)
-        })
+                         start = controls$tstart, end = controls$tend, 
+                         quant = controls$quant, freq = controls$freq)
+        }
     
       })
       
@@ -83,9 +81,14 @@ OutputServer <- function(id, input2, FLASH, counter, counterflash, flashtype,
         req(input2[["controls-flash_calc"]])
         if (flashtype$flashtype == 'single flash') {
               flashcheck(flash_data$data, start=controls$tstart, end=controls$tend, quant=controls$quant)
-            } else if (flashtype$flashtype == 'complex flash'){
+            } else if (flashtype$flashtype == 'complex flash') {
               complexflashcheck(flash_data$data, start=controls$tstart, end=controls$tend, quant=controls$quant, pause=controls$pause)
-            } else {glowcheck(flash_data$data, start=controls$tstart, end=controls$tend, quant=controls$quant, freq = controls$freq)}
+            } else {
+              glowcheck(flash_data$data, 
+                        start=controls$tstart, 
+                        end = controls$tend, 
+                        quant = controls$quant, freq = controls$freq)
+              }
       })
     }
   )

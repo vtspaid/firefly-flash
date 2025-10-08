@@ -60,7 +60,7 @@ ControllerServer <- function(id, counter, counterflash, flashtype,
       })
       
       observeEvent(input$frequency, {
-        controls$frequency <- input$frequency
+        controls$freq <- input$freq
       })
       
       # insert numeric inputs to remove background noise
