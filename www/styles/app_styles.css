@@ -1,6 +1,13 @@
 
 .myheader {
-  background-color: #BDF5BD;
+  background-color: #6de38c;
   padding: 5pt;
   margin: 0pt -15pt 10pt -15px;
+}
+
+.holdertest {
+  color:#b3f2c4 #BDF5BD #d2f7dc;
+}
+.container-fluid {
+  background-color: white;
 }
