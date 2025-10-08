@@ -73,7 +73,6 @@ InputFileUI("GrabFile"),
    )
 )
   
-
 ##### SERVER #######
 
 # Define server logic required to draw a histogram ----
@@ -111,47 +110,6 @@ server <- function(input, output, session) {
   # Create table of flash statistics
   OutputServer("output", input, FLASH, counter, counterflash, flashtype, 
                controls)
-
-  # Create plot checking where the code thinks the flashes are
-  output$resultsplot <- renderPlot({
-    req(FLASH())
-    req(input$flash_calc)
-    req(input[["GrabFile-inputfile"]])
-    df2 <- FLASH()$audio
-    samprate <- FLASH()$audio@samp.rate
-    # Remove flash
-    isolate(if(counter$countervalue > 0) 
-      {rm_times <- lapply(1:counter$countervalue, function(x) 
-        data.frame(start = eval(parse(text =paste0("input$rmstart",x))),
-        end = eval(parse(text=paste0("input$rmend",x)))
-        ))
-    }
-    )
-   isolate( if(counter$countervalue > 0)  {for (ii in 1:length(rm_times)){
-      df2$left[c(rm_times[[ii]]$start*samprate):c(rm_times[[ii]]$end*samprate)] <- 0
-    }
-     })
-   
-   # Add flash
-   isolate(if(counterflash$countervalue > 0) 
-   {add_times <- lapply(1:counterflash$countervalue, function(x) 
-     data.frame(newflash = eval(parse(text =paste0("input$added",x))))
-   )
-   })
-   
-   isolate( if(counterflash$countervalue > 0)  {for (ii in 1:length(add_times)){
-     df2$left[c(add_times[[ii]]$newflash*samprate)] <- c(quantile(df2$left, probs=input$quant)+1)
-   }
-   })
-   
-    isolate(if (input$flashtype == 'single flash') {
-      flashcheck(df2, start=input$tstart, end=input$tend, quant=input$quant)
-    } else if (input$flashtype == 'complex flash'){
-      complexflashcheck(df2, start=input$tstart, end=input$tend, quant=input$quant, pause=input$pause)
-    } else {glowcheck(df2, start=input$tstart, end=input$tend, quant=input$quant, freq = input$freq)})
-
-  })
-
 }
 
 

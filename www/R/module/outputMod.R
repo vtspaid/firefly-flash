@@ -19,9 +19,12 @@ OutputServer <- function(id, input2, FLASH, counter, counterflash, flashtype,
   moduleServer(
     id,
     function(input, output, session) {
-      output$flash_stats  <- renderTable({
+      
+      flash_data <- reactiveValues(flash_table = list(),
+                                   data = NA)
+      
+      observeEvent(input2[["controls-flash_calc"]], {
         req(FLASH())
-        req(input2[["controls-flash_calc"]])
         dfflash <- FLASH()$audio
         samprate <- FLASH()$audio@samp.rate
         print(flashtype$flashtype)
@@ -38,31 +41,51 @@ OutputServer <- function(id, input2, FLASH, counter, counterflash, flashtype,
             }
           }
         )
-      
+        
         # Add flash
         isolate(if(counterflash$countervalue > 0) 
         {add_times <- lapply(1:counterflash$countervalue, function(x) 
           data.frame(newflash = input2[[paste0("controls-added", x)]])
         )
         for (ii in 1:length(add_times)){
-          dfflash$left[c(add_times[[ii]]$newflash*samprate)] <- quantile(dfflash$left, input$quant) + 1
+            dfflash$left[c(add_times[[ii]]$newflash*samprate)] <- quantile(dfflash$left, input$quant) + 1
         }
         })
-print("did we get here")
+        print("did we get here")
         # Render table
+        flash_data$data <- dfflash
         isolate(if (flashtype$flashtype == 'single flash') {
-          singleflash(dfflash,
+          flash_data$flash_table <- singleflash(dfflash,
                       start=controls$tstart, end=controls$tend, quant=controls$quant
           )
         } else if (flashtype$flashtype == 'complex flash'){
-          complexflash(dfflash,
+          flash_data$flash_table <- complexflash(dfflash,
                        start=controls$tstart, end=controls$tend, pause=controls$pause, 
                        quant=controls$quant
           )
-        } else {slowglow(dfflash,
+        } else {
+          flash_data$flash_table <- slowglow(dfflash,
                          start=controls$tstart, end=controls$tend, 
-                         quant=controls$quant, freq = controls$freq
-        )})
+                         quant=controls$quant, freq = controls$freq)
+        })
+    
+      })
+      
+      output$flash_stats <- renderTable({
+        req(flash_data$flash_table)
+        req(input2[["controls-flash_calc"]])
+        flash_data$flash_table
+      })
+      
+      output$resultsplot <- renderPlot({
+        print("does this ever run")
+        req(flash_data$data)
+        req(input2[["controls-flash_calc"]])
+        if (flashtype$flashtype == 'single flash') {
+              flashcheck(flash_data$data, start=controls$tstart, end=controls$tend, quant=controls$quant)
+            } else if (flashtype$flashtype == 'complex flash'){
+              complexflashcheck(flash_data$data, start=controls$tstart, end=controls$tend, quant=controls$quant, pause=controls$pause)
+            } else {glowcheck(flash_data$data, start=controls$tstart, end=controls$tend, quant=controls$quant, freq = controls$freq)}
       })
     }
   )
