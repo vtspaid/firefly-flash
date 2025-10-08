@@ -118,7 +118,7 @@ ControllerServer <- function(id, app_values) {
       observeEvent(input$addflash, {
         req(input$addflash)
         app_values$addcounter <- app_values$addcounter + 1
-        num1 <- app_values$countervalue
+        num1 <- app_values$addcounter
         insertUI(selector = paste0("#", id, "-addflash"), where = "afterEnd",
                  ui = tags$div(id = paste0("#", id, "-flashadd"), 
                                numericInput(ns(paste0("added", num1)), 

@@ -44,7 +44,7 @@ OutputServer <- function(id, input2, flash, app_values) {
         
         # Add flash
         if (app_values$addcounter > 0) {
-          add_times <- lapply(1:app_values$countervalue, function(x) 
+          add_times <- lapply(1:app_values$addcounter, function(x) 
             data.frame(newflash = input2[[paste0("controls-added", x)]])
           )
           for (ii in seq_along(add_times)) {
