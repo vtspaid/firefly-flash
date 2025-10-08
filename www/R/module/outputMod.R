@@ -29,7 +29,7 @@ OutputServer <- function(id, input2, FLASH, counter, counterflash, flashtype,
         samprate <- FLASH()$audio@samp.rate
         print(flashtype$flashtype)
         # Remove flash
-        isolate(
+     
           if(counter$countervalue > 0) {
             rm_times <- lapply(1:counter$countervalue, function(x) 
               data.frame(start = input2[[paste0("controls-rmstart", x)]],
@@ -37,20 +37,19 @@ OutputServer <- function(id, input2, FLASH, counter, counterflash, flashtype,
             )
             
             for (ii in 1:length(rm_times)){
-              dfflash$left[c(rm_times[[ii]]$start*samprate):c(rm_times[[ii]]$end*samprate)] <- 0
+              dfflash@left[(rm_times[[ii]]$start*samprate):(rm_times[[ii]]$end*samprate)] <- 0
             }
           }
-        )
         
         # Add flash
-        isolate(if(counterflash$countervalue > 0) 
-        {add_times <- lapply(1:counterflash$countervalue, function(x) 
+        if(counterflash$countervalue > 0) {
+          add_times <- lapply(1:counterflash$countervalue, function(x) 
           data.frame(newflash = input2[[paste0("controls-added", x)]])
         )
-        for (ii in 1:length(add_times)){
-            dfflash$left[c(add_times[[ii]]$newflash*samprate)] <- quantile(dfflash$left, input$quant) + 1
+        for (ii in 1:length(add_times)) {
+            dfflash@left[add_times[[ii]]$newflash*samprate] <- quantile(dfflash@left, controls$quant) + 1
         }
-        })
+        }
         print("did we get here")
         # Render table
         flash_data$data <- dfflash
