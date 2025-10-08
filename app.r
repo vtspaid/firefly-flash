@@ -22,17 +22,19 @@ ui <- fluidPage(
   
   useShinyjs(),
   
-  # Add color
-  tags$style('.container-fluid {
-                             background-color: #BDF5BD;
-              }'),
+  # Link to style sheet
+  tags$head(
+    tags$link(rel = "stylesheet", type = "text/css", href = "styles/app_styles.css")
+  ),
+  
   # App title ----
-  fluidRow( column(1),
+  div(class = "myheader", fluidRow(column(12, column(1),
             column(10, titlePanel(p("Firefly Flash Statistics", 
                                     style='font-weight: bold; 
                                     font-size:120%; 
                                     text-align:center'))),
-            column(1, img(src='potomaca_pic.png', height='100%', width='100%'))),
+            column(1, img(src='potomaca_pic.png', height='80pts'))))
+      ),
 
 InputFileUI("GrabFile"), 
  

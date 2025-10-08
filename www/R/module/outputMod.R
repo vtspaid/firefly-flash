@@ -29,17 +29,17 @@ OutputServer <- function(id, input2, FLASH, counter, counterflash, flashtype,
         samprate <- FLASH()$audio@samp.rate
         print(flashtype$flashtype)
         # Remove flash
-     
-          if(counter$countervalue > 0) {
-            rm_times <- lapply(1:counter$countervalue, function(x) 
-              data.frame(start = input2[[paste0("controls-rmstart", x)]],
-                         end = input2[[paste0("controls-rmend", x)]])
-            )
-            
-            for (ii in 1:length(rm_times)){
-              dfflash@left[(rm_times[[ii]]$start*samprate):(rm_times[[ii]]$end*samprate)] <- 0
-            }
+        
+        if(counter$countervalue > 0) {
+          rm_times <- lapply(1:counter$countervalue, function(x) 
+            data.frame(start = input2[[paste0("controls-rmstart", x)]],
+                       end = input2[[paste0("controls-rmend", x)]])
+          )
+          
+          for (ii in 1:length(rm_times)){
+            dfflash@left[(rm_times[[ii]]$start*samprate):(rm_times[[ii]]$end*samprate)] <- 0
           }
+        }
         
         # Add flash
         if(counterflash$countervalue > 0) {
