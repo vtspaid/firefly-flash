@@ -35,6 +35,11 @@ ui <- fluidPage(
                                     text-align:center'))),
             column(1, img(src='potomaca_pic.png', height='80pts'))))
       ),
+  navbarPage("",
+    tabPanel("Manual Method",
+             p("Manual Method Landing Page")),
+    
+             tabPanel("Automatic Method", 
 
 InputFileUI("GrabFile"), 
  
@@ -73,6 +78,8 @@ InputFileUI("GrabFile"),
        )
    )
    )
+             ) # end of originanl tabPanel
+  ) # End of navbarPage
 )
   
 ##### SERVER #######
