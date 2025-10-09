@@ -7,6 +7,7 @@ InputFileUI <- function(id) {
 InputFileServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     reactive({
+      req(input$inputfile)
       print("starting infile server")
       infile <- input$inputfile
       print(infile)

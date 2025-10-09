@@ -8,11 +8,9 @@ ListenUI <- function(id) {
                  max = 10000),
     numericInput(NS(id, "end"),
                  "plot end time",
-                 value = 10,
+                 value = 0,
                  min = 1,
                  max = 10000),
-    actionButton(NS(id, "plotaudio"), "Plot audio"),
-    
     actionButton(NS(id, "audio"), "Play audio"),
     actionButton(NS(id, "clearaudio"), "Remove audio player")
   )

@@ -76,14 +76,15 @@ OutputServer <- function(id, input2, flash, app_values) {
       
       output$flash_stats <- renderTable({
         req(flash_data$flash_table)
-        req(input2[["controls-flash_calc"]])
+        input2[["controls-flash_calc"]]
         flash_data$flash_table
       })
       
       output$resultsplot <- renderPlot({
-        print("does this ever run")
+        print("render calc plot")
         req(flash_data$data)
-        req(input2[["controls-flash_calc"]])
+        input2[["controls-flash_calc"]]
+        isolate(
         if (app_values$flashtype == "single flash") {
           flashcheck(flash_data$data, 
                      start = app_values$tstart, 
@@ -102,6 +103,7 @@ OutputServer <- function(id, input2, flash, app_values) {
                     quant = app_values$quant, 
                     freq = app_values$freq)
         }
+        )
       })
     }
   )

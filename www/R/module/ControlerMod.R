@@ -2,9 +2,9 @@
 ControllerUI <- function(id) {
   ns <- NS(id)
   tagList(
-    numericInput(ns("start"), "start time", value = 0, min = 1, max = 30),
+    numericInput(ns("start"), "start time", value = 0, min = 1, max = 10000),
 
-    numericInput(ns("end"), "end time", value = 10, min = 1, max = 10000),
+    numericInput(ns("end"), "end time", value = 0, min = 1, max = 10000),
     numericInput(ns("quant"),
                  "amplitude quantile",
                  value = 0.999,
