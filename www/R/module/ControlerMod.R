@@ -61,57 +61,29 @@ ControllerServer <- function(id, app_values) {
         
         insertUI(selector = paste0("#", id, "-cancelnoise"), 
                  where = "afterEnd",
-                 ui =  tags$div(id = "removeall", 
+                 ui =  tags$div(id = "removerow",
+                               class = "inline",
                                 fluidRow(column(6,
                                                 numericInput(
                                                   paste0(ns("rmstart"), num),
-                                                  "Remove noise from",
-                                                  value = 0.01, 
-                                                  min = 0.1,
+                                                  "From:",
+                                                  value = 0, 
+                                                  min = 0,
                                                   max = 1000)),
                                          column(6, 
                                                 numericInput(
                                                   paste0(ns("rmend"), num),
-                                                  "Remove noise to",
-                                                  value = 0.01, 
-                                                  min = 0.1,
+                                                  "To:",
+                                                  value = 0, 
+                                                  min = 0,
                                                   max = 1000))
                                 )))
       })
       
       # remove UI inputs for background noise
       observeEvent(input$rmv_cancelnoise, {
-        updateNumericInput(session, "rmstart1", value = 0)
-        updateNumericInput(session, "rmstart2", value = 0)
-        updateNumericInput(session, "rmstart3", value = 0)
-        updateNumericInput(session, "rmstart4", value = 0)
-        updateNumericInput(session, "rmstart5", value = 0)
-        updateNumericInput(session, "rmstart6", value = 0)
-        updateNumericInput(session, "rmstart7", value = 0)
-        updateNumericInput(session, "rmstart8", value = 0)
-        updateNumericInput(session, "rmstart9", value = 0)
-        updateNumericInput(session, "rmstart10", value = 0)
-        updateNumericInput(session, "rmstart11", value = 0)
-        updateNumericInput(session, "rmstart12", value = 0)
-        updateNumericInput(session, "rmstart13", value = 0)
-        updateNumericInput(session, "rmstart14", value = 0)
-        updateNumericInput(session, "rmstart15", value = 0)
-        updateNumericInput(session, "rmend1", value = 0)
-        updateNumericInput(session, "rmend2", value = 0)
-        updateNumericInput(session, "rmend3", value = 0)
-        updateNumericInput(session, "rmend4", value = 0)
-        updateNumericInput(session, "rmend5", value = 0)
-        updateNumericInput(session, "rmend6", value = 0)
-        updateNumericInput(session, "rmend7", value = 0)
-        updateNumericInput(session, "rmend8", value = 0)
-        updateNumericInput(session, "rmend9", value = 0)
-        updateNumericInput(session, "rmend10", value = 0)
-        updateNumericInput(session, "rmend11", value = 0)
-        updateNumericInput(session, "rmend12", value = 0)
-        updateNumericInput(session, "rmend13", value = 0)
-        updateNumericInput(session, "rmend14", value = 0)
-        updateNumericInput(session, "rmend15", value = 0)
-        removeUI(selector = paste0("#", id, "-removeall"), immediate = FALSE)
+        app_values$countervalue <- app_values$countervalue - 1
+        removeUI(selector = "#removerow", multiple = TRUE)
       })
       
       # insert numeric inputs to add noise
@@ -120,7 +92,7 @@ ControllerServer <- function(id, app_values) {
         app_values$addcounter <- app_values$addcounter + 1
         num1 <- app_values$addcounter
         insertUI(selector = paste0("#", id, "-addflash"), where = "afterEnd",
-                 ui = tags$div(id = paste0("#", id, "-flashadd"), 
+                 ui = tags$div(id = "-flashadd", 
                                numericInput(ns(paste0("added", num1)), 
                                             "add a flash at x time", 
                                             value = NA, 
@@ -130,23 +102,8 @@ ControllerServer <- function(id, app_values) {
       
       # Remove UI inputs for adding flash
       observeEvent(input$rmv_addflash, {
-        updateNumericInput(session, "added1", value = NA)
-        updateNumericInput(session, "added2", value = NA)
-        updateNumericInput(session, "added3", value = NA)
-        updateNumericInput(session, "added4", value = NA)
-        updateNumericInput(session, "added5", value = NA)
-        updateNumericInput(session, "added6", value = NA)
-        updateNumericInput(session, "added7", value = NA)
-        updateNumericInput(session, "added8", value = NA)
-        updateNumericInput(session, "added9", value = NA)
-        updateNumericInput(session, "added10", value = NA)
-        updateNumericInput(session, "added11", value = NA)
-        updateNumericInput(session, "added12", value = NA)
-        updateNumericInput(session, "added13", value = NA)
-        updateNumericInput(session, "added14", value = NA)
-        updateNumericInput(session, "added15", value = NA)
-        removeUI(selector = paste0("#", id, "-flashadd"), immediate = FALSE)
-        
+        app_values$addcounter <- app_values$addcounter - 1
+        removeUI(selector = "#-flashadd", multiple = TRUE)
       })
     }
   )

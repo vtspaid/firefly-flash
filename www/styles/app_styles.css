@@ -17,3 +17,21 @@
 .container-fluid {
   background-color: white;
 }
+
+.inline input {
+  display: inline-block;
+  align-items: center;
+}
+
+.inline label {
+  display: table-cell;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.inline .form-group { 
+  display: table-row;
+  
+}
+lign-items: center;
+}

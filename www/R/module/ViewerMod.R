@@ -2,7 +2,7 @@
 ViewerUI <- function(id) {
   list(
     p("This plot is controlled by the 'plot times' tab on the left. 
-      It is purely for visulization of the audio"),
+      It is purely for visualization of the audio"),
     plotOutput(NS(id, "flashplot"))
   )
 }
