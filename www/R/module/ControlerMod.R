@@ -2,9 +2,18 @@
 ControllerUI <- function(id) {
   ns <- NS(id)
   tagList(
-    numericInput(ns("start"), "start time", value = 0, min = 1, max = 10000),
-
-    numericInput(ns("end"), "end time", value = 0, min = 1, max = 10000),
+    div(class = "inline",
+        fluidRow(column(6, 
+                        numericInput(ns("start"), 
+                                     "start time", 
+                                     value = 0, 
+                                     min = 1,
+                                     max = 10000),
+        ),
+        column(6, 
+               numericInput(ns("end"), "end time", value = 0, min = 1, max = 10000),
+        )
+        ),
     numericInput(ns("quant"),
                  "amplitude quantile",
                  value = 0.999,
@@ -22,7 +31,8 @@ ControllerUI <- function(id) {
                  value = 1,
                  min = 0,
                  max = 100,
-                 step = 0.1),
+                 step = 0.1)
+    ),
     radioButtons(ns("flashtype"),
                  "flash pattern", 
                  choices = c("single flash", "complex flash", "glow")),

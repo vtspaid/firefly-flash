@@ -38,10 +38,10 @@ ui <- fluidPage(
   # App Body ----
   navbarPage("",
 
-             # Panel for manually drawing on plot and calculating time
-             tabPanel("Manual Method",
-                      p("Manual Method Landing Page")
-             ), # end of manual tabPanel
+             # # Panel for manually drawing on plot and calculating time
+             # tabPanel("Manual Method",
+             #          p("Manual Method Landing Page")
+             # ), # end of manual tabPanel
 
              # Panel for automatically calculating time
              tabPanel("Automatic Method",
@@ -63,12 +63,12 @@ ui <- fluidPage(
                       # Main panel for displaying outputs ----
                       mainPanel(
                         tabsetPanel(
-                          tabPanel("Example", example_text()),
-
-                          tabPanel("Run Flash Calculations",
+                          tabPanel("Calculate Statistics",
                                    ViewerUI("fullview"),
                                    OutputUI("output")),
 
+                          tabPanel("Example", example_text()),
+                          
                           tabPanel("Details", details_text())
                         )
                       )

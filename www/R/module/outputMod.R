@@ -3,12 +3,12 @@ OutputUI <- function(id) {
   ns <- NS(id)
   tagList(
     br(),
-    flash_stats_text,
+    h3("Results"),
     tableOutput(ns("flash_stats")),
     
     br(), br(),
-    p("This plot is of the audio used in the flash calculations, the red lines 
-    are where the r function believes a flash occured"),
+    h3("Results Visualization"),
+    flash_stats_text,
     plotOutput(ns("resultsplot")),
     br(), br(), br(), br(), br(), br(), br(), br(), br(), br()
   )

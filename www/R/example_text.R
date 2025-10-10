@@ -81,10 +81,7 @@ details_text <- function() {
   )
 }
 
-flash_stats_text <- "This plot shows the section of the audio chosen for 
-analysis. If the single flash method was chosen there will be red lines 
-representing where flashes were detected. If the complex flash method was chosen 
-there will be green and blue lines representing where flashes occured and what 
-group they belong to. If glow method was chosen there will be a green line 
-showing where the start of a flash is detected, and a red line showing where 
-the end of the flash is detected."
+flash_stats_text <- "Red lines represent single flashes. If the complex flash 
+method was chosen there will be green and blue lines representing groups of
+flashes. If glow method was chosen the green line represents the start of a 
+flash and the red line represents the end."
