@@ -2,15 +2,11 @@
 OutputUI <- function(id) {
   ns <- NS(id)
   tagList(
-    br(),
     h3("Results"),
     tableOutput(ns("flash_stats")),
-    
-    br(), br(),
     h3("Results Visualization"),
     flash_stats_text,
-    plotOutput(ns("resultsplot")),
-    br(), br(), br(), br(), br(), br(), br(), br(), br(), br()
+    plotOutput(ns("resultsplot"))
   )
 }
 

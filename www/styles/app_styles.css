@@ -1,4 +1,5 @@
 
+
 .myheader {
   background-color: #6de38c;
   padding: 5pt;
@@ -29,6 +30,7 @@
   text-align: left;
   vertical-align: middle;
   margin-right: 5pt;
+  font-weight: 400;
 }
 
 .inline .form-group { 

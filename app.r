@@ -10,10 +10,8 @@ library(shinyjs)
 # Source necessary scripts
 source("www/R/flash_functions.R")
 source("www/R/example_text.R")
-source("www/R/module/InputFileMod.R")
-source("www/R/module/ListenMod.R")
 source("www/R/module/ViewerMod.R")
-source("www/R/module/ControlerMod.R")
+source("www/R/module/ControlsMod.R")
 source("www/R/module/outputMod.R")
 
 # UI ---------------------------
@@ -45,20 +43,9 @@ ui <- fluidPage(
 
              # Panel for automatically calculating time
              tabPanel("Automatic Method",
-
-                      InputFileUI("GrabFile"),
-
+                      
                       # Sidebar layout with input and output definitions ----
-                      sidebarPanel(
-                        tabsetPanel(
-                          tabPanel("Plot start and end times",
-                                   ListenUI("viewplot")),
-
-                          tabPanel("Flash calculations",
-                                   ControllerUI("controls"))
-                        )
-                      ), # end of sidebar panel
-
+                      sidebarPanel(ControlsUI("controls")),
 
                       # Main panel for displaying outputs ----
                       mainPanel(
@@ -77,16 +64,10 @@ ui <- fluidPage(
 )
 
 
-##### SERVER #######
+# Server --------------
 server <- function(input, output, session) {
 
   options(shiny.maxRequestSize = 15 * 1024^2)
-
-  # Read in file
-  flash <- InputFileServer("GrabFile")
-
-  # Insert audio UI
-  xlims <- ListenServer("viewplot", flash, input)
 
   # Initilize a reactive values
   app_values <- reactiveValues(countervalue = 0,
@@ -98,12 +79,12 @@ server <- function(input, output, session) {
                                quant = 0.999,
                                freq = 9)
 
-  ControllerServer("controls", app_values)
+  flash <- ControlsServer("controls", input, app_values)
 
   # Create plot of overall audio file
-  ViewerServer("fullview", flash, input, xlims)
+  ViewerServer("fullview", flash, input)
 
-  # Create table of flash statistics
+  # Create table of flash statistics and plot of where falshes were detected
   OutputServer("output", input, flash, app_values)
 }
 

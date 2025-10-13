@@ -7,7 +7,7 @@ ViewerUI <- function(id) {
 }
 
 
-ViewerServer <- function(id, flash, input2, xlims) {
+ViewerServer <- function(id, flash, input2) {
   moduleServer(id, function(input, output, session) {
     output$flashplot <- renderPlot({
       req(flash())
@@ -22,7 +22,7 @@ ViewerServer <- function(id, flash, input2, xlims) {
              col = "black",
              xlab = "Seconds",
              ylab = "Amplitude",
-             xlim = c(xlims()$start, xlims()$end))
+             xlim = c(flash()$start, flash()$end))
     })
   })
 }

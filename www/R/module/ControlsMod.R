@@ -1,28 +1,48 @@
 
-ControllerUI <- function(id) {
+ControlsUI <- function(id) {
   ns <- NS(id)
   tagList(
+    fileInput(ns("inputfile"), "Choose a .wav or .mp3 file",
+              accept = c(".wav", ".mp3")),
+    actionButton(ns("audio"), "Play audio"),
+    actionButton(ns("clearaudio"), "Remove audio player"),
+    br(),
+    br(),
+    strong("Start and End Time of Plot (seconds)"),
     div(class = "inline",
         fluidRow(column(6, 
-                        numericInput(ns("start"), 
-                                     "start time:", 
+                        numericInput(ns("start_m"), 
+                                     "start:", 
                                      value = 0, 
-                                     min = 1,
+                                     min = 0,
                                      max = 10000),
         ),
         column(6, 
-               numericInput(ns("end"), "end time:", value = 0, min = 1, max = 10000),
+               numericInput(ns("end_m"), "end:", value = 0, min = 0, max = 10000),
         )
         ),
-    numericInput(ns("quant"),
-                 "amplitude quantile:",
-                 value = 0.999,
-                 min = 0.85,
-                 max = 1,
-                 step = 0.001),
+        br(),
+        strong("Start and End Time of Calculations (seconds)"),
+        fluidRow(column(6, 
+                        numericInput(ns("start"), 
+                                     "start:", 
+                                     value = 0, 
+                                     min = 0,
+                                     max = 10000),
+        ),
+        column(6, 
+               numericInput(ns("end"), "end:", value = 0, min = 0, max = 10000),
+        )
+        ),
+        numericInput(ns("quant"),
+                     "amplitude quantile:",
+                     value = 0.999,
+                     min = 0.85,
+                     max = 1,
+                     step = 0.001),
     ),
     radioButtons(ns("flashtype"),
-                 "flash pattern", 
+                 "Flash Pattern", 
                  choices = c("single flash", "complex flash", "glow")),
     uiOutput(ns("test_option")),
     fluidRow(column(12, actionButton(ns("cancelnoise"), "remove noise"))),
@@ -39,11 +59,58 @@ ControllerUI <- function(id) {
   )
 }
 
-ControllerServer <- function(id, app_values) {
+ControlsServer <- function(id, input2, app_values) {
   moduleServer(
     id,
     function(input, output, session) {
       ns <- NS(id)
+      
+      flash <- reactive({
+        req(input$inputfile)
+        print("starting infile server")
+        infile <- input$inputfile
+        print(infile)
+        if (grepl(".*\\.wav", ignore.case = TRUE, infile$datapath)) {
+          audio <- readWave(infile$datapath)
+        } else {
+          audio <- readMP3(infile$datapath)
+        }
+        audio <- Wave(left = audio@left[seq(1, length(audio@left), by = 4)],
+                      samp.rate = audio@samp.rate / 4, bit = 16)
+        data <- list(file = input$inputfile$datapath,
+                     audio = audio)
+        print("ending infile server")
+        data
+      })
+      
+      # Update max length of file
+      observeEvent(input$inputfile, {
+        print("is this running")
+        req(flash())
+        req(flash()$audio)
+        duration <- length(flash()$audio@left) / flash()$audio@samp.rate
+        updateNumericInput(session, "end_m", value = duration, max = duration)
+      })
+      
+      # Play the sound
+      observeEvent(input$audio, {
+        print("starting viewplot Server")
+        req(flash())
+        req(input2[["GrabFile-inputfile"]])
+        print(flash()$file)
+        base64 <- dataURI(file = flash()$file, mime = "audio/wav")
+        insertUI(selector = paste0("#", id, "-audio"), where = "afterEnd",
+                 ui = tags$div(id = "howleraudio", howler::howlerModuleUI(
+                   id = "sound",
+                   files = list("imported audio" = base64)
+                 )
+                 ))
+      })
+      
+      # Remove the audio UI
+      observeEvent(input$clearaudio, {
+        removeUI(selector = "#howleraudio", immediate = TRUE)
+      })
       
       observeEvent(input$flashtype, app_values$flashtype <- input$flashtype)
       observeEvent(input$start, app_values$tstart <- input$start)
@@ -88,7 +155,7 @@ ControllerServer <- function(id, app_values) {
         insertUI(selector = paste0("#", id, "-cancelnoise"), 
                  where = "afterEnd",
                  ui =  tags$div(id = "removerow",
-                               class = "inline",
+                                class = "inline",
                                 fluidRow(column(6,
                                                 numericInput(
                                                   paste0(ns("rmstart"), num),
@@ -131,6 +198,11 @@ ControllerServer <- function(id, app_values) {
         app_values$addcounter <- app_values$addcounter - 1
         removeUI(selector = "#-flashadd", multiple = TRUE)
       })
+      
+      reactive(list(file = flash()$file,
+                    audio = flash()$audio,
+                    start = input$start_m, 
+                    end = input$end_m))
     }
   )
 }
