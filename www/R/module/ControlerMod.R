@@ -5,37 +5,26 @@ ControllerUI <- function(id) {
     div(class = "inline",
         fluidRow(column(6, 
                         numericInput(ns("start"), 
-                                     "start time", 
+                                     "start time:", 
                                      value = 0, 
                                      min = 1,
                                      max = 10000),
         ),
         column(6, 
-               numericInput(ns("end"), "end time", value = 0, min = 1, max = 10000),
+               numericInput(ns("end"), "end time:", value = 0, min = 1, max = 10000),
         )
         ),
     numericInput(ns("quant"),
-                 "amplitude quantile",
+                 "amplitude quantile:",
                  value = 0.999,
                  min = 0.85,
                  max = 1,
                  step = 0.001),
-    numericInput(ns("freq"), 
-                 "frequency (slow glow only)",
-                 value = 9, 
-                 min = 0,
-                 max = 25,
-                 step = 1), 
-    numericInput(ns("pause"), 
-                 "Group flashes if less than x seconds (complex flash only)", 
-                 value = 1,
-                 min = 0,
-                 max = 100,
-                 step = 0.1)
     ),
     radioButtons(ns("flashtype"),
                  "flash pattern", 
                  choices = c("single flash", "complex flash", "glow")),
+    uiOutput(ns("test_option")),
     fluidRow(column(12, actionButton(ns("cancelnoise"), "remove noise"))),
     fluidRow(column(8, actionButton(ns("rmv_cancelnoise"), "restore noise"))),
     br(),
@@ -63,6 +52,33 @@ ControllerServer <- function(id, app_values) {
       observeEvent(input$pause, app_values$pause <- input$pause)
       observeEvent(input$frequency, app_values$freq <- input$freq)
       
+      observeEvent(input$flashtype, {
+        print("flashtype changed")
+        print(input$flashtype)
+        if (input$flashtype == "complex flash") {
+          output$test_option <- renderUI({
+            numericInput(ns("pause"), 
+                         "Group flashes if less than x seconds:", 
+                         value = 1,
+                         min = 0,
+                         max = 100,
+                         step = 0.1)
+          })
+          removeUI(selector = ns("glowtest"), multiple = TRUE)
+        } else if (input$flashtype == "glow") {
+          output$test_option <- renderUI({
+            numericInput(ns("freq"), 
+                         "frequency:",
+                         value = 9, 
+                         min = 0,
+                         max = 25,
+                         step = 1)
+          })
+          removeUI(selector = ns("comptest"), multiple = TRUE)
+        } else {
+          output$test_option <- renderUI({})
+        }
+      })
       # insert numeric inputs to remove background noise
       observeEvent(input$cancelnoise, {
         req(input$cancelnoise)

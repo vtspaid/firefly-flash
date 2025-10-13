@@ -60,7 +60,7 @@ OutputServer <- function(id, input2, flash, app_values) {
                                                 start = app_values$tstart, 
                                                 end = app_values$tend, 
                                                 quant = app_values$quant)
-        } else if (app_values$flashtype == "complex flas") {
+        } else if (app_values$flashtype == "complex flash") {
           flash_data$flash_table <- complexflash(dfflash,
                                                  start = app_values$tstart, 
                                                  end = app_values$tend, 
