@@ -16,51 +16,39 @@ source("www/R/module/outputMod.R")
 
 # UI ---------------------------
 ui <- fluidPage(
-
+  
   useShinyjs(),
-
+  
   # Link to style sheet
   tags$head(
     tags$link(rel = "stylesheet",
               type = "text/css",
               href = "styles/app_styles.css")
   ),
-
+  
   # App Header ----
   div(class = "myheader",
       fluidRow(column(1),
                column(10, titlePanel("Firefly Flash Statistics")),
                column(1, img(src = "potomaca_pic.png", height = "80pts")))
   ),
-
+  
   # App Body ----
-  navbarPage("",
-
-             # # Panel for manually drawing on plot and calculating time
-             # tabPanel("Manual Method",
-             #          p("Manual Method Landing Page")
-             # ), # end of manual tabPanel
-
-             # Panel for automatically calculating time
-             tabPanel("Automatic Method",
-                      
-                      # Sidebar layout with input and output definitions ----
-                      sidebarPanel(ControlsUI("controls")),
-
-                      # Main panel for displaying outputs ----
-                      mainPanel(
-                        tabsetPanel(
-                          tabPanel("Calculate Statistics",
-                                   ViewerUI("fullview"),
-                                   OutputUI("output")),
-
-                          tabPanel("Example", example_text()),
-                          
-                          tabPanel("Details", details_text())
-                        )
-                      )
-             ) # end of automatic tabPanel
-  ) # End of navbarPage
+  # Sidebar layout with input and output definitions ----
+  sidebarPanel(ControlsUI("controls")),
+  
+  # Main panel for displaying outputs ----
+  mainPanel(
+    tabsetPanel(
+      tabPanel("Calculate Statistics",
+               ViewerUI("fullview"),
+               OutputUI("output")),
+      
+      tabPanel("Example", example_text()),
+      
+      tabPanel("Details", details_text())
+    )
+  )
 )
 
 

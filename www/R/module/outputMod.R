@@ -4,7 +4,6 @@ OutputUI <- function(id) {
   tagList(
     h3("Results"),
     tableOutput(ns("flash_stats")),
-    h3("Results Visualization"),
     flash_stats_text,
     plotOutput(ns("resultsplot"))
   )
