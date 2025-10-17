@@ -18,7 +18,7 @@ details_text <- function() {
 }
 
 flash_stats_text <- "Red lines represent single flashes. If the complex flash 
-method was chosen there will be green and blue lines representing groups of
+method was chosen there will be red and blue lines representing groups of
 flashes. If glow method was chosen the green line represents the start of a 
 flash and the red line represents the end."
 

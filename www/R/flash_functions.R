@@ -1,5 +1,19 @@
 # Store functions
 
+flash_plot <- function(timeArray, amp) {
+  par(mar = c(4, 4, 1, 1))
+  fun_plot <-  plot(x=timeArray, 
+                    y=amp, 
+                    type='l',
+                    col='black', 
+                    xlab='Seconds', 
+                    ylab='Amplitude', 
+                    xaxt="n")
+  axis(1, at = seq(1, round(max(timeArray)), by = 2), las=2)
+  return(fun_plot)
+}
+
+
 ##### create a custom function needed later #####
 signcheck <- function(x){sum(sign(x) != lag(sign(x)), na.rm=T)}
 
@@ -192,9 +206,7 @@ flashcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0
   # find median Time of each sound grouping
   peak <- timeamp %>% group_by(grouping) %>% summarise(peakTime=median(Time))
   
-  flashcheck <- plot(x=timeArray, y=amp, type='l',
-                     col='black', xlab='Seconds', ylab='Amplitude', xaxt="n")
-  axis(1, at = seq(1, round(max(timeArray)), by = 2), las=2)
+  flashcheck <- flash_plot(timeArray, amp)
   segments(x0=peak$peakTime, x1=peak$peakTime, y0=min(wav@left), y1=0, col="red")
   
   return(flashcheck)
@@ -238,9 +250,7 @@ complexflashcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, 
     mutate(grouping = cumsum(samegroup)+1) 
   
   
-  flashcheck <- plot(x=timeArray, y=amp, type='l',
-                     col='black', xlab='Seconds', ylab='Amplitude', xaxt="n")
-  axis(1, at = seq(1, round(max(timeArray)), by = 2), las=2)
+  flashcheck <- flash_plot(timeArray, amp)
   segments(x0=peak$peakTime, x1= peak$peakTime, y0=min(wav@left), y1=0, 
            col=rep(c("blue", "red"), length(unique(peak$grouping)/2))[peak$grouping])
   
@@ -302,9 +312,7 @@ glowcheck <- function(wav, start=0, end=length(wav@left)/wav@samp.rate, quant=0.
   
   
   
-  flashcheck <- plot(x=timeArray, y=amp, type='l',
-                     col='black', xlab='Seconds', ylab='Amplitude', xaxt="n")
-  axis(1, at = seq(1, round(max(timeArray)), by = 1), las=2)
+  flashcheck <- flash_plot(timeArray, amp)
   segments(x0 = glowtimes$start, x1 = glowtimes$start, y0 = min(wav@left), y1 = max(wav@left), 
            col="green")
   segments(x0 = glowtimes$end, x1 = glowtimes$end, y0 = min(wav@left), y1 = max(wav@left), 

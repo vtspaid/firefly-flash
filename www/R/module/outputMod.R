@@ -5,7 +5,7 @@ OutputUI <- function(id) {
     h3("Results"),
     tableOutput(ns("flash_stats")),
     flash_stats_text,
-    plotOutput(ns("resultsplot"))
+    plotOutput(ns("resultsplot"), height = "300px")
   )
 }
 

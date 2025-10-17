@@ -13,10 +13,7 @@ ExampleUI <- function(id) {
                     ), # End of first column
     column(8, uiOutput(ns("instructions"))), # End of second column
     ), # End of fluidRow
-    plotOutput(ns("flashplot")),
-    p("Set the plot start and end times to 0 and 32 respectively. Then do the
-      same for the calculation start and end times and hit \"Run Flash 
-      Calculations\"")
+    plotOutput(ns("flashplot"), height = "300px")
   )
 }
 
@@ -66,6 +63,7 @@ ExampleServer <- function(id, input2) {
       train_audio <- flash()$audio
       timeArray <- (0:(length(train_audio@left) - 1)) / train_audio@samp.rate
       # Plot the wave
+      par(mar = c(4, 4, 1, 0))
       plot(x = timeArray, 
            y = train_audio@left,
            type = "l",
