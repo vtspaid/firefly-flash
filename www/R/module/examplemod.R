@@ -3,7 +3,7 @@ ExampleUI <- function(id) {
   ns <- NS(id)
   list(
     h3("Choose a flash category to explore"),
-    fluidRow(column(6,
+    fluidRow(column(4,
       
     radioButtons(ns("flashtype"),
                  "", 
@@ -11,7 +11,7 @@ ExampleUI <- function(id) {
                  inline = TRUE),
     uiOutput(ns("audioplayer")),
                     ), # End of first column
-    column(6, HTML(single_flash_example)), # End of second column
+    column(8, uiOutput(ns("instructions"))), # End of second column
     ), # End of fluidRow
     plotOutput(ns("flashplot")),
     p("Set the plot start and end times to 0 and 32 respectively. Then do the
@@ -27,10 +27,13 @@ ExampleServer <- function(id, input2) {
       req(input$flashtype)
       if (input$flashtype == "single flash") {
         infile <- "www/example single flash recording.WAV"
+        output$instructions <- renderUI(HTML(single_flash_example))
       } else if (input$flashtype == "complex flash") {
         infile <- "www/example_complex_flash.wav"
+        output$instructions <- renderUI(HTML(complex_flash_example))
       } else {
         infile <- "www/example slow glow flash.wav"
+        output$instructions <- renderUI(HTML(glow_flash_example))
       }
       print(infile)
       

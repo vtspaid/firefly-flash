@@ -1,55 +1,3 @@
-example_text <- function() {
-  list(
-br(),
-h2("Flash Calculation Example"),
-br(),
-h4("This page is non-interactive"),
-h4("After reviewing the examples on this page move to the 'Run Flash Calculations' tab to run calculations
-                   on your audio file"),
-br(),
-br(),br(),
-p("First use the browse button at the top left of the page to find and upload your audio file. 
-                    File size is currently limited to 15 MB"),
-p("A plot of your audio file will automatically render. It will look similar the figure below."),
-tags$div(img(src='singleflash_with_error_1.png', height='80%', width='80%')),
-br(),
-p("You can control the x axis of this plot with the first tab on the left. This plot is only for visualization
-                    purposes. The start and end times that control this plot, do not set the start and end time of the flash 
-                    calculation functions"),
-br(), br(),
-p("To control how the flash statistics are calculated, switch to the 'Flash
-                    calculations' tab on the left. There you will see a number of inputs that you can modify to change
-                 how the flash statistics are calculated. The flash statistics will not be calculated until you hit the 
-                    'Run Flash Calculations' button. Once you do a plot similar to the one shown below will render"),
-img(src='singleflash_with_error_calc_plot2.png', height='80%', width='80%'),
-br(), br(),
-p("It will also produce a table containing results"),
-img(src='table_with_error.png', height='50%', width='50%'),
-br(), br(),
-p("The red lines are where the function detected a flash. We see that there is
-                   an erroneous flash at around the 9 second mark in this example. We can use the 'remove noise'
-                   button to supply a time range where we wish to remove all noise.
-                   In this example we would use 8.7 and 8.9. Running
-                   the function again will produce a plot like the one below."),
-img(src='singleflash_witherror_fixed2.png', height='80%', width='80%'),
-br(), br(),
-p("The table will also be updated. Compare the minimum flash interval with the previous table."),
-  img(src='table_with_error_fixed.png', height='50%', width='50%'),
-  br(), br(),
-  p("We can also use the 'add flash' button to add a flash into the plot if the function is not identifying 
-                   all flashes"),
-  br(), p("The radio buttons will select which of three functions to use
-                         based on what type of flash pattern you recorded. The amplitude quantile
-                         controls how loud a noise is before it is considered a flash; slight changes make a big
-                         differences, best results tend to be between 0.995 and 0.999. The 'Group flashes if less than x seconds' only 
-                         comes into play when using the 'complex flash' function, and sets the cut off point for when flashes will be 
-                         considered part of the same group.
-                         "),
-  br(), br(),br(),br(),br(),br(),br(),br(),br(),br(),br()
-  )
-}
-
-
 details_text <- function() {
   list(
     br(),br(),
@@ -65,19 +13,7 @@ details_text <- function() {
                                    noises are being falsely flagged as flashes. For the long flash/glow method, you will 
                                    need to decrease the quantile to 0.9 or even lower. Oftentimes you will end up with a 
                                    mix of false negatives and false positives; this is where 
-                                   you will need to use the remove noise, and add flash options."),
-    br(),br(),
-    h4("remove noise/restore noise:"),
-    p("Hitting the remove noise button allows you to select a time range where you can set the amplitude to zero.
-         You can remove multiple sections at once. The 'restore noise' button will restore ALL sections of removed amplitude. 
-        If you wish to only remove one section, you will have to manually change the times. Note that if the remove noise button
-        is clicked more than 15 times in a session it will cause the shiny app to crash. Best practice is to refresh the page 
-        after completing analysis on an audio file, before importing another audio file."),
-    br(),br(),
-    h4("add flash/noise:"),
-    p("This will add a flash at a specific location, if the function fails to detect. Currently this only works for quick 
-        flashes. In the future I may add functionality for adding long, glow type flashes."),
-    br(), br(), br(), br(), br(), br(), br(), br(), br(), br(), br()
+                                   you will need to use the remove noise, and add flash options.")
   )
 }
 
@@ -86,12 +22,28 @@ method was chosen there will be green and blue lines representing groups of
 flashes. If glow method was chosen the green line represents the start of a 
 flash and the red line represents the end."
 
-single_flash_example <- "1. Set The start and end times of the calculations to
+single_flash_example <- "<b>1.</b> Set The start and end times of the calculations to
 0 and 32 and amplitude to 0.999 and hit \"Run flash caluclations\"
-<br>2. Set the amplitude to 0.998 and observe the result. Note the extra flash 
+<br><b>2.</b> Set the amplitude to 0.998 and observe the result. Note the extra flash 
 before 9 seconds. Hit the \"Remove noise\" button and set the values to 8.5 and
  8.9 and run the calculations again.
-<br>3. Now set the amplitude to 0.9999 and observe the results. Hit the 
+<br><b>3.</b> Now set the amplitude to 0.9999 and observe the results. Hit the 
 \"Add Flash\" button twice and enter 16.4 and 29 and run the calculations again.
-<br>4. Hit the \"Restore noise\" and \"Remove added flash\" button to reset 
+<br><b>4.</b> Hit the \"Restore noise\" and \"Remove added flash\" button to reset 
 everything"
+
+complex_flash_example <- "<b>1.</b> Set The start and end times of the 
+calculations to 0 and 45 and amplitude to 0.999 and hit \"Run flash caluclations\"
+<br><b>2.</b> Change the \"Flash pattern\" on the side bar to complex flash and 
+try again.
+<br><b>3.</b> Note the extra flashes from 9 to 10 seconds. 
+ Hit the \"Remove noise\" button and set the values from 9.1 to 10 and run the 
+ calculations again.
+<br><b>4.</b> Enter different values into the \"Group flashes\" box
+and explore the results. Try 0.2, 1, 1.5, and 2."
+
+glow_flash_example <- "<b>1.</b> Set The start and end times of the 
+calculations to 20 and 55 and amplitude to 0.999 and hit \"Run flash caluclations\"
+<br><b>2.</b> Change the \"Flash pattern\" on the side bar to glow and 
+try again.
+<br><b>3.</b> Lower the amplitude to 0.998 and run again."

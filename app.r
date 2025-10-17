@@ -49,8 +49,7 @@ ui <- fluidPage(
       
       tabPanel("Example", 
                ExampleUI("example"),
-               OutputUI("example_output"),
-               example_text()),
+               OutputUI("example_output")),
       
       tabPanel("Details", details_text())
     )
