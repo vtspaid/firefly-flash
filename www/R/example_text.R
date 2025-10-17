@@ -85,3 +85,13 @@ flash_stats_text <- "Red lines represent single flashes. If the complex flash
 method was chosen there will be green and blue lines representing groups of
 flashes. If glow method was chosen the green line represents the start of a 
 flash and the red line represents the end."
+
+single_flash_example <- "1. Set The start and end times of the calculations to
+0 and 32 and amplitude to 0.999 and hit \"Run flash caluclations\"
+<br>2. Set the amplitude to 0.998 and observe the result. Note the extra flash 
+before 9 seconds. Hit the \"Remove noise\" button and set the values to 8.5 and
+ 8.9 and run the calculations again.
+<br>3. Now set the amplitude to 0.9999 and observe the results. Hit the 
+\"Add Flash\" button twice and enter 16.4 and 29 and run the calculations again.
+<br>4. Hit the \"Restore noise\" and \"Remove added flash\" button to reset 
+everything"

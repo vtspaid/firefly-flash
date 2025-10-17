@@ -18,6 +18,7 @@ OutputServer <- function(id, input2, flash, app_values) {
                                    data = NA)
       
       observeEvent(input2[["controls-flash_calc"]], {
+        print("trying")
         req(flash())
         dfflash <- flash()$audio
         samprate <- flash()$audio@samp.rate

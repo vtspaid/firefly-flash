@@ -18,7 +18,7 @@ ControlsUI <- function(id) {
                                      max = 10000),
         ),
         column(6, 
-               numericInput(ns("end_m"), "end:", value = 0, min = 0, max = 10000),
+               numericInput(ns("end_m"), "end:", value = 80, min = 0, max = 10000),
         )
         ),
         br(),
@@ -31,7 +31,7 @@ ControlsUI <- function(id) {
                                      max = 10000),
         ),
         column(6, 
-               numericInput(ns("end"), "end:", value = 0, min = 0, max = 10000),
+               numericInput(ns("end"), "end:", value = 1, min = 0, max = 10000),
         )
         ),
         numericInput(ns("quant"),
@@ -94,7 +94,6 @@ ControlsServer <- function(id, input2, app_values) {
       
       # Play the sound
       observeEvent(input$audio, {
-        print("starting viewplot Server")
         req(flash())
         req(input2[["GrabFile-inputfile"]])
         print(flash()$file)

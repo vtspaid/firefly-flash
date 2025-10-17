@@ -7,12 +7,10 @@ ViewerUI <- function(id) {
 }
 
 
-ViewerServer <- function(id, flash, input2) {
+ViewerServer <- function(id, flash) {
   moduleServer(id, function(input, output, session) {
     output$flashplot <- renderPlot({
       req(flash())
-        print("what is the length")
-        print(length(flash()$audio@left))
         train_audio <- flash()$audio
         timeArray <- (0:(length(train_audio@left) - 1)) / train_audio@samp.rate
         # Plot the wave

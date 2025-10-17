@@ -13,6 +13,9 @@ source("www/R/example_text.R")
 source("www/R/module/ViewerMod.R")
 source("www/R/module/ControlsMod.R")
 source("www/R/module/outputMod.R")
+source("www/R/module/examplemod.R")
+
+addResourcePath("www", "www")
 
 # UI ---------------------------
 ui <- fluidPage(
@@ -44,7 +47,10 @@ ui <- fluidPage(
                ViewerUI("fullview"),
                OutputUI("output")),
       
-      tabPanel("Example", example_text()),
+      tabPanel("Example", 
+               ExampleUI("example"),
+               OutputUI("example_output"),
+               example_text()),
       
       tabPanel("Details", details_text())
     )
@@ -70,10 +76,15 @@ server <- function(input, output, session) {
   flash <- ControlsServer("controls", input, app_values)
 
   # Create plot of overall audio file
-  ViewerServer("fullview", flash, input)
+  ViewerServer("fullview", flash)
 
   # Create table of flash statistics and plot of where falshes were detected
   OutputServer("output", input, flash, app_values)
+  
+  
+  flash_example <- ExampleServer("example", input)
+  
+  OutputServer("example_output", input, flash_example, app_values)
 }
 
 
