@@ -1,13 +1,19 @@
 # Store functions
 
-flash_plot <- function(timeArray, amp) {
+flash_plot <- function(timeArray, amp, xlims = NULL) {
   par(mar = c(3, 3, 1, 0), mgp = c(1.5, 0.5, 0))
-  fun_plot <-  plot(x=timeArray, 
-                    y=amp, 
-                    type='l',
-                    col='black', 
-                    xlab='Seconds', 
-                    ylab='Amplitude')
+  
+  if (is.null(xlims)) {
+    xlims <- c(timeArray[1], timeArray[length(timeArray)])
+  }
+
+  fun_plot <-  plot(x = timeArray, 
+                    y = amp, 
+                    type = 'l',
+                    col = 'black', 
+                    xlab = 'Seconds', 
+                    ylab = 'Amplitude',
+                    xlim = xlims)
 }
 
 

@@ -67,7 +67,7 @@ ExampleServer <- function(id, input2) {
       train_audio <- flash()$audio
       timeArray <- (0:(length(train_audio@left) - 1)) / train_audio@samp.rate
       # Plot the wave
-      flash_plot(timeArray, train_audio@left)
+      flash_plot(timeArray, train_audio@left, input$duration)
     })
     
     flash
