@@ -4,10 +4,7 @@ ControlsUI <- function(id) {
   tagList(
     fileInput(ns("inputfile"), "Choose a .wav or .mp3 file",
               accept = c(".wav", ".mp3")),
-    actionButton(ns("audio"), "Play audio"),
-    actionButton(ns("clearaudio"), "Remove audio player"),
-    br(),
-    br(),
+    uiOutput(ns("audioplayer")),
     div(class = "inline",
         strong("Start and End Time of Calculations (seconds)"),
         fluidRow(column(6, 
@@ -72,30 +69,10 @@ ControlsServer <- function(id, input2, app_values) {
       
       # Update max length of file
       observeEvent(input$inputfile, {
-        print("is this running")
-        req(flash())
-        req(flash()$audio)
-        duration <- length(flash()$audio@left) / flash()$audio@samp.rate
-        updateNumericInput(session, "end_m", value = duration, max = duration)
-      })
-      
-      # Play the sound
-      observeEvent(input$audio, {
-        req(flash())
-        req(input2[["GrabFile-inputfile"]])
-        print(flash()$file)
         base64 <- dataURI(file = flash()$file, mime = "audio/wav")
-        insertUI(selector = paste0("#", id, "-audio"), where = "afterEnd",
-                 ui = tags$div(id = "howleraudio", howler::howlerModuleUI(
-                   id = "sound",
-                   files = list("imported audio" = base64)
-                 )
-                 ))
-      })
-      
-      # Remove the audio UI
-      observeEvent(input$clearaudio, {
-        removeUI(selector = "#howleraudio", immediate = TRUE)
+        output$audioplayer <- renderUI({
+          tags$audio(src = base64, type = "audio/wav", controls = NA)
+        })
       })
       
       observeEvent(input$flashtype, app_values$flashtype <- input$flashtype)
