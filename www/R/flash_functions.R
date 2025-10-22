@@ -1,16 +1,13 @@
 # Store functions
 
 flash_plot <- function(timeArray, amp) {
-  par(mar = c(4, 4, 1, 1))
+  par(mar = c(3, 3, 1, 0), mgp = c(1.5, 0.5, 0))
   fun_plot <-  plot(x=timeArray, 
                     y=amp, 
                     type='l',
                     col='black', 
                     xlab='Seconds', 
-                    ylab='Amplitude', 
-                    xaxt="n")
-  axis(1, at = seq(1, round(max(timeArray)), by = 2), las=2)
-  return(fun_plot)
+                    ylab='Amplitude')
 }
 
 

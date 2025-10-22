@@ -37,5 +37,8 @@
   display: table-row;
   
 }
-lign-items: center;
+
+.duration_slider {
+  margin: 0pt;
+  height: 60px;
 }

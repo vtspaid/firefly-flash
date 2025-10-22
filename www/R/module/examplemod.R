@@ -10,11 +10,17 @@ ExampleUI <- function(id) {
                  choices = c("single flash", "complex flash", "glow"),
                  inline = TRUE),
     uiOutput(ns("audioplayer")),
-                    ), # End of first column
+    ), # End of first column
     column(8, uiOutput(ns("instructions"))), # End of second column
     ), # End of fluidRow
-    plotOutput(ns("flashplot"), height = "300px")
-  )
+    plotOutput(ns("flashplot"), height = "300px"),
+    fluidRow(column(1),
+             column(11,  
+                    div(class = "duration_slider",
+                        sliderInput(ns("duration"), label = NULL,
+                                    min = 0, max = 100, value = c(0, 100),
+                                    widt = "100%"))))
+    )
 }
 
 
@@ -46,13 +52,11 @@ ExampleServer <- function(id, input2) {
       
       # Update max length of file
       duration <- length(audio@left) / audio@samp.rate
-      updateNumericInput(session, "controls-end_m", 
-                         value = duration, max = duration)
+      updateNumericInput(session, "duration", 
+                         value = c(0, duration), min = 0, max = duration)
       
       data <- list(file = infile,
-                   audio = audio,
-                   start = input2[["controls-start_m"]],
-                   end = input2[["controls-end_m"]])
+                   audio = audio)
       print("ending infile server")
       data
     })
@@ -63,15 +67,9 @@ ExampleServer <- function(id, input2) {
       train_audio <- flash()$audio
       timeArray <- (0:(length(train_audio@left) - 1)) / train_audio@samp.rate
       # Plot the wave
-      par(mar = c(4, 4, 1, 0))
-      plot(x = timeArray, 
-           y = train_audio@left,
-           type = "l",
-           col = "black",
-           xlab = "Seconds",
-           ylab = "Amplitude",
-           xlim = c(flash()$start, flash()$end))
+      flash_plot(timeArray, train_audio@left)
     })
+    
     flash
   })
   
