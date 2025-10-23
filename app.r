@@ -4,7 +4,6 @@ library(shiny)
 library(tuneR)
 library(dplyr)
 library(base64enc)
-#library(howler)
 library(shinyjs)
 
 # Source necessary scripts

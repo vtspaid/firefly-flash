@@ -52,22 +52,27 @@ OutputServer <- function(id, input2, flash, app_values) {
         # Render table
         flash_data$data <- dfflash
         if (app_values$flashtype == "single flash") {
-          flash_data$flash_table <- singleflash(dfflash,
-                                                start = app_values$tstart, 
-                                                end = app_values$tend, 
-                                                quant = app_values$quant)
+          flash_data$flash <- singleflash(dfflash,
+                                          start = app_values$tstart, 
+                                          end = app_values$tend, 
+                                          quant = app_values$quant)
+          flash_data$flash_table <- singleflash_df(flash_data$flash$peak)
         } else if (app_values$flashtype == "complex flash") {
-          flash_data$flash_table <- complexflash(dfflash,
-                                                 start = app_values$tstart, 
-                                                 end = app_values$tend, 
-                                                 pause = app_values$pause, 
-                                                 quant = app_values$quant)
+          flash_data$flash <- complexflash(dfflash,
+                                           start = app_values$tstart, 
+                                           end = app_values$tend, 
+                                           pause = app_values$pause, 
+                                           quant = app_values$quant)
+          flash_data$flash_table <- complexflash_df(flash_data$flash$peak,
+                                                    flash_data$flash$breaktime)
         } else {
-          flash_data$flash_table <- slowglow(dfflash,
-                                             start = app_values$tstart, end = app_values$tend, 
-                                             quant = app_values$quant, freq = app_values$freq)
+          flash_data$flash <- slowglow(dfflash,
+                                       start = app_values$tstart, 
+                                       end = app_values$tend, 
+                                       quant = app_values$quant, 
+                                       freq = app_values$freq)
+          flash_data$flash_table <- slowglow_df(flash_data$flash$glowtimes)
         }
-        
       })
       
       output$flash_stats <- renderTable({
@@ -82,22 +87,11 @@ OutputServer <- function(id, input2, flash, app_values) {
         input2[["controls-flash_calc"]]
         isolate(
         if (app_values$flashtype == "single flash") {
-          flashcheck(flash_data$data, 
-                     start = app_values$tstart, 
-                     end = app_values$tend, 
-                     quant = app_values$quant)
+          singleflash_plot(flash_data$flash)
         } else if (app_values$flashtype == "complex flash") {
-          complexflashcheck(flash_data$data, 
-                            start = app_values$tstart, 
-                            end = app_values$tend,
-                            quant = app_values$quant,
-                            pause = app_values$pause)
+          complexflash_plot(flash_data$flash)
         } else {
-          glowcheck(flash_data$data, 
-                    start = app_values$tstart, 
-                    end = app_values$tend, 
-                    quant = app_values$quant, 
-                    freq = app_values$freq)
+          slowglow_plot(flash_data$flash)
         }
         )
       })

@@ -55,22 +55,16 @@ ExampleServer <- function(id, input2) {
       updateNumericInput(session, "duration", 
                          value = c(0, duration), min = 0, max = duration)
       
-      data <- list(file = infile,
-                   audio = audio)
-      print("ending infile server")
-      data
+      list(file = infile, audio = audio)
     })
-    
     
     output$flashplot <- renderPlot({
       req(flash())
       train_audio <- flash()$audio
       timeArray <- (0:(length(train_audio@left) - 1)) / train_audio@samp.rate
-      # Plot the wave
       flash_plot(timeArray, train_audio@left, input$duration)
     })
     
     flash
   })
-  
 }
