@@ -15,12 +15,8 @@ flash_plot <- function(timeArray, amp, xlims = NULL) {
 }
 
 
-mysegments <- function(peaktime, amp, mycol) {
-  segments(x0 = peaktime, 
-           x1 = peaktime, 
-           y0 = max(amp),
-           y1 = min(amp),
-           col = mycol)
+mysegments <- function(peak, amp, mycol) {
+  segments(x0 = peak, x1 = peak, y0 = max(amp), y1 = min(amp), col = mycol)
 }
 
 
@@ -70,7 +66,7 @@ flashcalc <- function(wav,
                       end = length(wav@left)/wav@samp.rate, 
                       quant = 0.998,
                       pause = 1,
-                      flashtype = "single_flash") {
+                      flashtype) {
   # Get only the amplitude values between the starting and ending times
   amp <- get_amps(wav, start ,end) 
   
@@ -83,15 +79,12 @@ flashcalc <- function(wav,
   # Find median time of each sound grouping (peak) and the difference them
   peak <- create_peak(timeamp)
   
-  if (flashtype == "complex_flash") {
+  if (flashtype == "complex flash") {
     # Find median time of each sound grouping (peak) and the difference them
     peak <- create_peak(timeamp)
     
-    # create breaktime
-    if(hasArg(pause)) {breaktime = pause}  else{breaktime = mean(peak$timediff)*1.1}
-    
     # create complex flash groupings
-    peak <- peak %>% mutate(samegroup = ifelse(timediff < breaktime, 0, 1)) %>%
+    peak <- peak %>% mutate(samegroup = ifelse(timediff < pause, 0, 1)) %>%
       mutate(samegroup = replace(samegroup, is.na(samegroup), 1)) %>%
       mutate(grouping = cumsum(samegroup))
   } else {
@@ -128,63 +121,66 @@ flashcalc <- function(wav,
        amp = amp,
        peak = peak, 
        wav = wav,
-       breaktime = breaktime,
-       glowtimes = glowtimes)
+       breaktime = pause,
+       glowtimes = glowtimes,
+       flashtype = flashtype)
 }
 
-flashcalc_df <- function(peak = NULL, 
-                         glowtimes = NULL, 
-                         breaktime = 1, 
-                         flashtype) {
-  if (flashtype %in% c("single_flash", "complex_flash")) {
-  data1 <- data.frame(mean_interval = mean(peak$timediff[-1]),
-                      max_interval = max(peak$timediff[-1]), 
-                      min = min(peak$timediff[-1]),
-                      sd = sd(peak$timediff[2:length(peak$timediff)]),
-                      flash_num = (nrow(peak) - 1))
+flashcalc_df <- function(peak) {
+  if (peak$flashtype == "single flash") {
+  data1 <- data.frame(mean_interval = mean(peak$peak$timediff[-1]),
+                      max_interval = max(peak$peak$timediff[-1]), 
+                      min = min(peak$peak$timediff[-1]),
+                      sd = sd(peak$peak$timediff[2:length(peak$peak$timediff)]),
+                      flash_num = (nrow(peak$peak) - 1))
   }
   
-  if (flashtype == "complex_flash") {
+  if (peak$flashtype == "complex flash") {
     # create df of just the interflash timings
-    interflash <- peak[peak$timediff < breaktime,]
+    interflash <- peak$peak[peak$peak$timediff < peak$breaktime, ]
     
     # create df of just the between timings
-    betweengroup <- peak[peak$timediff > breaktime,]
+    betweengroup <- peak$peak[peak$peak$timediff > peak$breaktime, ]
     
     # create df of number of flashes per group
-    num_flashes <- peak %>% group_by(grouping) %>% summarise(n=n())
+    num_flashes <- peak$peak %>% group_by(grouping) %>% summarise(n=n())
     
-    data1 <- cbind(data1, 
-                   data.frame(mean_flash_num = mean(num_flashes$n),
-                              mean_between_group = mean(betweengroup$timediff),
-                              max_pause = max(betweengroup$timediff), 
-                              min_pause = min(betweengroup$timediff), 
-                              pause_sd = sd(betweengroup$timediff),
-                              pause_num = nrow(betweengroup)))
+    data1 <- data.frame(mean_interval=mean(interflash$timediff[-1]),
+                        mean_flash_num = mean(num_flashes$n),
+                        max_interval = max(interflash$timediff[-1]), 
+                        min = min(interflash$timediff[-1]), 
+                        sd = sd(interflash$timediff[-1]),
+                        flash_num = nrow(interflash) - 1,
+                        mean_flash_num = mean(num_flashes$n),
+                        mean_between_group = mean(betweengroup$timediff),
+                        max_pause = max(betweengroup$timediff), 
+                        min_pause = min(betweengroup$timediff), 
+                        pause_sd = sd(betweengroup$timediff),
+                        pause_num = nrow(betweengroup))
   }
   
-  if (flashtype == "glow") {
-    data1 <- data.frame(mean_glow = mean(glowtimes$length),
-               max_glow = max(glowtimes$length), 
-               min = min(glowtimes$length), 
-               sd = sd(glowtimes$length),
-               flash_num = nrow(glowtimes),
-               dark_period = mean(glowtimes$pause[-1]),
-               max_pause = max(glowtimes$pause[-1]), 
-               min_pause = min(glowtimes$pause[-1]), 
-               pause_sd = sd(glowtimes$pause[-1]),
-               pause_num = nrow(glowtimes) - 1)
+  if (peak$flashtype == "glow") {
+    data1 <- data.frame(mean_glow = mean(peak$glowtimes$length),
+               max_glow = max(peak$glowtimes$length), 
+               min = min(peak$glowtimes$length), 
+               sd = sd(peak$glowtimes$length),
+               flash_num = nrow(peak$glowtimes),
+               dark_period = mean(peak$glowtimes$pause[-1]),
+               max_pause = max(peak$glowtimes$pause[-1]), 
+               min_pause = min(peak$glowtimes$pause[-1]), 
+               pause_sd = sd(peak$glowtimes$pause[-1]),
+               pause_num = nrow(peak$glowtimes) - 1)
   }
   data1
 }
 
-flashcalc_plot <- function(data, flashtype) {
+flashcalc_plot <- function(data) {
   flashcheck <- flash_plot(data$timeArray, data$amp)
-  if (flashtype == "complex_flash") {
+  if (data$flashtype == "complex flash") {
     flashtime <- data$peak$peakTime
     mycols <- rep(c("blue", "red"),
                   length(unique(data$peak$grouping + 1)/2))[data$peak$grouping + 1]
-  } else if (flashtype == "single_flash") {
+  } else if (data$flashtype == "single flash") {
     flashtime <- data$peak$peakTime
     mycols <- "red"
   } else {

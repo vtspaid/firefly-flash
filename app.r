@@ -79,7 +79,6 @@ server <- function(input, output, session) {
   # Create table of flash statistics and plot of where falshes were detected
   OutputServer("output", input, flash, app_values)
   
-  
   flash_example <- ExampleServer("example", input)
   
   OutputServer("example_output", input, flash_example, app_values)

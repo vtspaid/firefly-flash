@@ -28,7 +28,7 @@ ControlsUI <- function(id) {
     radioButtons(ns("flashtype"),
                  "Flash Pattern", 
                  choices = c("single flash", "complex flash", "glow")),
-    uiOutput(ns("test_option")),
+    uiOutput(ns("complex_option")),
     fluidRow(column(12, actionButton(ns("cancelnoise"), "remove noise"))),
     fluidRow(column(8, actionButton(ns("rmv_cancelnoise"), "restore noise"))),
     br(),
@@ -86,7 +86,7 @@ ControlsServer <- function(id, input2, app_values) {
         print("flashtype changed")
         print(input$flashtype)
         if (input$flashtype == "complex flash") {
-          output$test_option <- renderUI({
+          output$complex_option <- renderUI({
             numericInput(ns("pause"), 
                          "Group flashes if less than x seconds:", 
                          value = 1,
@@ -95,16 +95,6 @@ ControlsServer <- function(id, input2, app_values) {
                          step = 0.1)
           })
           removeUI(selector = ns("glowtest"), multiple = TRUE)
-        } else if (input$flashtype == "glow") {
-          output$test_option <- renderUI({
-            numericInput(ns("freq"), 
-                         "frequency:",
-                         value = 9, 
-                         min = 0,
-                         max = 25,
-                         step = 1)
-          })
-          removeUI(selector = ns("comptest"), multiple = TRUE)
         } else {
           output$test_option <- renderUI({})
         }

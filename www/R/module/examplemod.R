@@ -3,15 +3,15 @@ ExampleUI <- function(id) {
   ns <- NS(id)
   list(
     h3("Choose a flash category to explore"),
-    fluidRow(column(4,
-      
-    radioButtons(ns("flashtype"),
-                 "", 
-                 choices = c("single flash", "complex flash", "glow"),
-                 inline = TRUE),
-    uiOutput(ns("audioplayer")),
-    ), # End of first column
-    column(8, uiOutput(ns("instructions"))), # End of second column
+    fluidRow(
+      column(4,
+             radioButtons(ns("flashtype"),
+                          "", 
+                          choices = c("single flash", "complex flash", "glow"),
+                          inline = TRUE),
+             uiOutput(ns("audioplayer")),
+      ), # End of first column
+      column(8, uiOutput(ns("instructions"))), # End of second column
     ), # End of fluidRow
     plotOutput(ns("flashplot"), height = "300px"),
     fluidRow(column(1),
@@ -20,7 +20,7 @@ ExampleUI <- function(id) {
                         sliderInput(ns("duration"), label = NULL,
                                     min = 0, max = 100, value = c(0, 100),
                                     widt = "100%"))))
-    )
+  )
 }
 
 
