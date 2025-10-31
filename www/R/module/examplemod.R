@@ -27,18 +27,15 @@ ExampleUI <- function(id) {
 ExampleServer <- function(id, input2) {
   moduleServer(id, function(input, output, session) {
     flash <- reactive({
+      output$instructions <- renderUI(HTML(flash_example))
       req(input$flashtype)
       if (input$flashtype == "single flash") {
         infile <- "www/example single flash recording.WAV"
-        output$instructions <- renderUI(HTML(single_flash_example))
       } else if (input$flashtype == "complex flash") {
         infile <- "www/example_complex_flash.wav"
-        output$instructions <- renderUI(HTML(complex_flash_example))
       } else {
         infile <- "www/example slow glow flash.wav"
-        output$instructions <- renderUI(HTML(glow_flash_example))
       }
-      print(infile)
       
       output$audioplayer <- renderUI({
         tags$audio(src = flash()$file, type = "audio/wav", controls = NA)

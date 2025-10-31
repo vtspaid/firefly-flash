@@ -17,33 +17,24 @@ details_text <- function() {
   )
 }
 
-flash_stats_text <- "Red lines represent single flashes. If the complex flash 
-method was chosen there will be red and blue lines representing groups of
-flashes. If glow method was chosen the green line represents the start of a 
-flash and the red line represents the end."
+flash_example <- "<b>1.</b> Select the example flash type to explore.
+<br><b>2.</b> Set The start and end times of the calculations on the left hand
+side bar and hit \"Run flash caluclations\".
+<br><b>3.</b> Play with the different inputs like 'amplitude', 'remove noise', and
+'add flash' to see how the results change. You can hover over these buttons to 
+see an explanation of what they do."
 
-single_flash_example <- "<b>1.</b> Set The start and end times of the calculations to
-0 and 32 and amplitude to 0.999 and hit \"Run flash caluclations\"
-<br><b>2.</b> Set the amplitude to 0.998 and observe the result. Note the extra flash 
-before 9 seconds. Hit the \"Remove noise\" button and set the values to 8.5 and
- 8.9 and run the calculations again.
-<br><b>3.</b> Now set the amplitude to 0.9999 and observe the results. Hit the 
-\"Add Flash\" button twice and enter 16.4 and 29 and run the calculations again.
-<br><b>4.</b> Hit the \"Restore noise\" and \"Remove added flash\" button to reset 
-everything"
+amplitude_text <- "This is the quantile of amplitude that is used to detect a
+flash. Increase it to be more selective and decreaese it to be more inclusive."
 
-complex_flash_example <- "<b>1.</b> Set The start and end times of the 
-calculations to 0 and 45 and amplitude to 0.999 and hit \"Run flash caluclations\"
-<br><b>2.</b> Change the \"Flash pattern\" on the side bar to complex flash and 
-try again.
-<br><b>3.</b> Note the extra flashes from 9 to 10 seconds. 
- Hit the \"Remove noise\" button and set the values from 9.1 to 10 and run the 
- calculations again.
-<br><b>4.</b> Enter different values into the \"Group flashes\" box
-and explore the results. Try 0.2, 1, 1.5, and 2."
+rm_noise_text <- "Press this and select a time range to remove all noise from.
+Multiple time ranges can be selected by pressing this button multiple times.
+Useful for removing erroneuous flashes that can't be removed by changing the
+amplitude quantile"
 
-glow_flash_example <- "<b>1.</b> Set The start and end times of the 
-calculations to 20 and 55 and amplitude to 0.999 and hit \"Run flash caluclations\"
-<br><b>2.</b> Change the \"Flash pattern\" on the side bar to glow and 
-try again.
-<br><b>3.</b> Lower the amplitude to 0.998 and run again."
+add_flash_text <- "If a flash is not being detected you can add a flash to a 
+specific time with this button. There is no limit to how many can be added."
+
+group_flash_text <- "This is the time difference used to dilineate groups. 
+Flashes that occur within this time are considered apart of the same group.
+Otherwise they will be considered part of separate groups"

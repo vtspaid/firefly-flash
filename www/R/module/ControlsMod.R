@@ -18,25 +18,27 @@ ControlsUI <- function(id) {
                numericInput(ns("end"), "end:", value = 1, min = 0, max = 10000),
         )
         ),
-        numericInput(ns("quant"),
-                     "amplitude quantile:",
-                     value = 0.999,
-                     min = 0.85,
-                     max = 1,
-                     step = 0.001),
+        tags$div(title = amplitude_text, 
+                 numericInput(ns("quant"),
+                              "amplitude quantile:",
+                              value = 0.999,
+                              min = 0.85,
+                              max = 1,
+                              step = 0.001)),
     ),
     radioButtons(ns("flashtype"),
                  "Flash Pattern", 
                  choices = c("single flash", "complex flash", "glow")),
     uiOutput(ns("complex_option")),
-    fluidRow(column(12, actionButton(ns("cancelnoise"), "remove noise"))),
+    tags$div(title = rm_noise_text,
+             actionButton(ns("cancelnoise"), "remove noise")),
     br(),
-    fluidRow(column(8, actionButton(ns("addflash"), "add flash/noise"))),
+    tags$div(title = add_flash_text,
+             actionButton(ns("addflash"), "add flash/noise")),
     br(),
-    fluidRow(column(1, 
-                    actionButton(ns("flash_calc"), "Run flash calculations",
-                                 style = "font-weight: bold; font-size:120%")))
-  )
+    actionButton(ns("flash_calc"), "Run flash calculations",
+                 style = "font-weight: bold; font-size:120%"))
+  
 }
 
 ControlsServer <- function(id, input2, app_values) {
@@ -83,12 +85,13 @@ ControlsServer <- function(id, input2, app_values) {
         print(input$flashtype)
         if (input$flashtype == "complex flash") {
           output$complex_option <- renderUI({
-            numericInput(ns("pause"), 
+            tags$div(title = group_flash_text,
+                     numericInput(ns("pause"), 
                          "Group flashes if less than x seconds:", 
                          value = 1,
                          min = 0,
                          max = 100,
-                         step = 0.1)
+                         step = 0.1))
           })
         } else {
           output$complex_option <- renderUI({})
@@ -119,10 +122,12 @@ ControlsServer <- function(id, input2, app_values) {
                                                   min = 0,
                                                   max = 1000)),
                                          column(1, 
+                                                tags$div(
+                                                  title = "remove row",
                                                actionButton(paste0(ns("rmn_"), num),
                                                             NULL,
                                                             icon = icon("times"),
-                                                            class = "rm_btn"),
+                                                            class = "rm_btn"))
                                                )
                                 )))
       })
@@ -146,7 +151,7 @@ ControlsServer <- function(id, input2, app_values) {
         insertUI(selector = paste0("#", id, "-addflash"), 
                  where = "afterEnd",
                  ui = tags$div(id = paste0("-flashadd", num1), 
-                               class = "inline2",
+                               class = "inline",
                                column(10, 
                                       numericInput(ns(paste0("added", num1)), 
                                             "Time:", 
@@ -154,10 +159,12 @@ ControlsServer <- function(id, input2, app_values) {
                                             min = 0, 
                                             max = 1000)),
                                column(1, 
+                                      tags$div(
+                                        title = "remove row",
                                       actionButton(paste0(ns("rma_"), num1),
                                                    NULL,
                                                    icon = icon("times"),
-                                                   class = "rm_btn"),
+                                                   class = "rm_btn")),
                                )))
       })
       
