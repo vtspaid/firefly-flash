@@ -30,12 +30,8 @@ ControlsUI <- function(id) {
                  choices = c("single flash", "complex flash", "glow")),
     uiOutput(ns("complex_option")),
     fluidRow(column(12, actionButton(ns("cancelnoise"), "remove noise"))),
-    fluidRow(column(8, actionButton(ns("rmv_cancelnoise"), "restore noise"))),
     br(),
-    fluidRow(column(8, actionButton(ns("addflash"), "add flash/noise")),
-             column(6)),
-    fluidRow(column(1, actionButton(ns("rmv_addflash"), 
-                                    "remove added flash/noise"))),
+    fluidRow(column(8, actionButton(ns("addflash"), "add flash/noise"))),
     br(),
     fluidRow(column(1, 
                     actionButton(ns("flash_calc"), "Run flash calculations",
@@ -94,9 +90,8 @@ ControlsServer <- function(id, input2, app_values) {
                          max = 100,
                          step = 0.1)
           })
-          removeUI(selector = ns("glowtest"), multiple = TRUE)
         } else {
-          output$test_option <- renderUI({})
+          output$complex_option <- renderUI({})
         }
       })
       # insert numeric inputs to remove background noise
@@ -104,52 +99,76 @@ ControlsServer <- function(id, input2, app_values) {
         req(input$cancelnoise)
         app_values$countervalue <- app_values$countervalue + 1 
         num <- app_values$countervalue
-        
+        app_values$newvec <- c(app_values$newvec, app_values$countervalue)
         insertUI(selector = paste0("#", id, "-cancelnoise"), 
                  where = "afterEnd",
-                 ui =  tags$div(id = "removerow",
-                                class = "inline",
-                                fluidRow(column(6,
+                 ui =  tags$div(id = paste0("removerow_", num),
+                                class = "inline2",
+                                fluidRow(column(5,
                                                 numericInput(
                                                   paste0(ns("rmstart"), num),
                                                   "From:",
                                                   value = 0, 
                                                   min = 0,
                                                   max = 1000)),
-                                         column(6, 
+                                         column(5, 
                                                 numericInput(
                                                   paste0(ns("rmend"), num),
                                                   "To:",
                                                   value = 0, 
                                                   min = 0,
-                                                  max = 1000))
+                                                  max = 1000)),
+                                         column(1, 
+                                               actionButton(paste0(ns("rmn_"), num),
+                                                            NULL,
+                                                            icon = icon("times"),
+                                                            class = "rm_btn"),
+                                               )
                                 )))
       })
-      
-      # remove UI inputs for background noise
-      observeEvent(input$rmv_cancelnoise, {
-        app_values$countervalue <- app_values$countervalue - 1
-        removeUI(selector = "#removerow", multiple = TRUE)
+
+      # Remove the additional UI
+      observe({
+        purrr::walk(app_values$newvec, function(i) {
+          observeEvent(input[[paste0("rmn_", i)]], {
+            removeUI(selector = paste0("#removerow_", i), multiple = TRUE)
+            app_values$newvec <- app_values$newvec[app_values$newvec != i]
+          }, ignoreInit = TRUE)
+        })
       })
       
       # insert numeric inputs to add noise
       observeEvent(input$addflash, {
         req(input$addflash)
         app_values$addcounter <- app_values$addcounter + 1
+        app_values$flist <- c(app_values$flist, app_values$addcounter)
         num1 <- app_values$addcounter
-        insertUI(selector = paste0("#", id, "-addflash"), where = "afterEnd",
-                 ui = tags$div(id = "-flashadd", 
-                               numericInput(ns(paste0("added", num1)), 
-                                            "add a flash at x time", 
+        insertUI(selector = paste0("#", id, "-addflash"), 
+                 where = "afterEnd",
+                 ui = tags$div(id = paste0("-flashadd", num1), 
+                               class = "inline2",
+                               column(10, 
+                                      numericInput(ns(paste0("added", num1)), 
+                                            "Time:", 
                                             value = NA, 
                                             min = 0, 
-                                            max = 1000)))
+                                            max = 1000)),
+                               column(1, 
+                                      actionButton(paste0(ns("rma_"), num1),
+                                                   NULL,
+                                                   icon = icon("times"),
+                                                   class = "rm_btn"),
+                               )))
       })
       
-      # Remove UI inputs for adding flash
-      observeEvent(input$rmv_addflash, {
-        app_values$addcounter <- app_values$addcounter - 1
-        removeUI(selector = "#-flashadd", multiple = TRUE)
+      # Remove the additional UI
+      observe({
+        purrr::walk(app_values$flist, function(i) {
+          observeEvent(input[[paste0("rma_", i)]], {
+            removeUI(selector = paste0("#-flashadd", i), multiple = TRUE)
+            app_values$flist <- app_values$flist[app_values$flist != i]
+          }, ignoreInit = TRUE)
+        })
       })
       
       reactive(list(file = flash()$file,

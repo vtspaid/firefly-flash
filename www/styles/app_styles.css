@@ -19,26 +19,50 @@
   background-color: white;
 }
 
-.inline input {
+
+.inline input, .inline2 input {
   display: inline-block;
   align-items: center;
   margin: 5pt;
+  margin-right: 0pt;
+  padding-right: 0pt;
+  margin-left: 2pt;
+  padding-left:2pt;
 }
 
-.inline label {
+.inline label, .inline2 label {
   display: table-cell;
   text-align: left;
   vertical-align: middle;
   margin-right: 5pt;
+  margin-left:5pt;
+  padding-left:5pt;
   font-weight: 400;
 }
 
-.inline .form-group { 
+.inline .form-group, .inline2 .form-group { 
   display: table-row;
-  
-}
+  width: 100%;
+} 
 
 .duration_slider {
   margin: 0pt;
   height: 60px;
 }
+
+.inline2 input {
+  width: 110%;             
+}
+
+.inline2 label {
+  width:10%;
+}
+
+.rm_btn {
+  color:maroon;
+  padding: 1pt;
+  margin-bottom:0pt;
+  margin-top: 5pt;
+  font-size:22px;
+}
+

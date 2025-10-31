@@ -40,8 +40,7 @@ create_timeamp <- function(amp, timeArray, quant, flashtype) {
   
   timer <- ifelse(flashtype == "glow", 0.3, 0.05)
   
-  # create groups based on the difference in time. If the difference in time is less than .01 sec
-  # then it will be placed in the same sound group.
+  # create groups based on the difference in time. 
   timeamp <- timeamp %>% mutate(samepeak = ifelse(timediff < timer, 0, 1))%>% 
     mutate(samepeak = replace(samepeak, is.na(samepeak), 1)) %>%
     mutate(grouping = cumsum(samepeak))
