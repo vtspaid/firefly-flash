@@ -38,3 +38,8 @@ specific time with this button. There is no limit to how many can be added."
 group_flash_text <- "This is the time difference used to dilineate groups. 
 Flashes that occur within this time are considered apart of the same group.
 Otherwise they will be considered part of separate groups"
+
+flash_stats_text <- "Red lines represent single flashes. If the complex flash 
+method was chosen there will be red and blue lines representing groups of
+flashes. If glow method was chosen the green line represents the start of a 
+flash and the red line represents the end."

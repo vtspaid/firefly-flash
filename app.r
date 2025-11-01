@@ -9,10 +9,10 @@ library(shinyjs)
 # Source necessary scripts
 source("www/R/flash_functions.R")
 source("www/R/example_text.R")
-source("www/R/module/ViewerMod.R")
-source("www/R/module/ControlsMod.R")
-source("www/R/module/outputMod.R")
 source("www/R/module/examplemod.R")
+source("www/R/module/ControlsMod.R")
+source("www/R/module/ViewerMod.R")
+source("www/R/module/OutputMod.R")
 
 addResourcePath("www", "www")
 

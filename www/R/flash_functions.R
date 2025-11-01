@@ -31,8 +31,12 @@ create_timeamp <- function(amp, timeArray, quant, flashtype) {
   # Create dataframe of time and amplitude
   timeamp <- data.frame(Time = timeArray, Amp = amp)
 
-  # keep only amplitudes in the top 1%
-  timeamp <- timeamp[abs(timeamp$Amp) > quantile(timeamp$Amp, quant),]
+  # keep only amplitudes above the specified quantile
+  if (quant == 1) {
+    timeamap <- timeamp[1, ]
+  } else {
+    timeamp <- timeamp[abs(timeamp$Amp) > quantile(timeamp$Amp, quant),]
+  }
 
   
   # get time difference between remaining high level amplitudes
@@ -46,9 +50,32 @@ create_timeamp <- function(amp, timeArray, quant, flashtype) {
     mutate(grouping = cumsum(samepeak))
 }
 
-create_peak <- function(timeamp) {
-  # find median time of each sound grouping
-  peak <- timeamp %>% group_by(grouping) %>% summarise(peakTime=median(Time))
+create_peak <- function(timeamp, synth = NULL, rm_flash, dif, quant) {
+  
+  if (quant == 1 && is.null(synth)) {
+    return(data.frame(grouping = 0, peakTime = NA))
+  } else if (quant == 1) {
+    peakTime <- synth
+  } else {
+    # find median time of each sound grouping
+    peak <- timeamp %>% group_by(grouping) %>% summarise(peakTime=median(Time))
+    peakTime <- peak$peakTime
+  }
+  
+  if (length(synth > 0)) {
+    synth <- synth[purrr::map_vec(synth, 
+                                  function(x) !any(abs(x - peakTime) < dif))]
+    peakTime <- sort(c(peakTime, synth))
+  }
+  
+  if (length(rm_flash) > 0) {
+    for (i in rm_flash) {
+      peakTime <- peakTime[abs(peakTime - i) > dif]
+    }
+  }
+  
+  group <- 1:length(peakTime) - 1
+  peak <- data.frame(grouping = group, peakTime = peakTime)
   
   # find time difference in the peak times
   peak$timediff <- c(0, diff(peak$peakTime))
@@ -65,10 +92,15 @@ flashcalc <- function(wav,
                       end = length(wav@left)/wav@samp.rate, 
                       quant = 0.998,
                       pause = 1,
-                      flashtype) {
+                      flashtype,
+                      synth = NULL,
+                      rm_flash = NULL) {
   # Get only the amplitude values between the starting and ending times
   amp <- get_amps(wav, start ,end) 
   
+  dif <- (end - start) / 250
+  synth <- synth[synth > start & synth < end]
+  rm_flash <- rm_flash[rm_flash > start & rm_flash < end]
   # Create time array 
   timeArray <- ((0:(length(amp)-1)) / wav@samp.rate) + start
   
@@ -76,11 +108,11 @@ flashcalc <- function(wav,
   timeamp <- create_timeamp(amp, timeArray, quant, flashtype)
   
   # Find median time of each sound grouping (peak) and the difference them
-  peak <- create_peak(timeamp)
+  peak <- create_peak(timeamp, synth, rm_flash, dif, quant)
   
   if (flashtype == "complex flash") {
     # Find median time of each sound grouping (peak) and the difference them
-    peak <- create_peak(timeamp)
+    peak <- create_peak(timeamp, synth, rm_flash, dif, quant)
     
     # create complex flash groupings
     peak <- peak %>% mutate(samegroup = ifelse(timediff < pause, 0, 1)) %>%

@@ -5,6 +5,8 @@ account: vtspaid
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 10809508
-bundleId: 11050135
+bundleId: 11114039
 url: https://vtspaid.shinyapps.io/firefly-flash/
 version: 1
+asMultiple: FALSE
+asStatic: FALSE
