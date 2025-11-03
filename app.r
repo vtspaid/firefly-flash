@@ -68,8 +68,7 @@ server <- function(input, output, session) {
                                tstart = 0,
                                tend = 30,
                                pause = 1,
-                               quant = 0.999,
-                               freq = 9)
+                               quant = 0.999)
 
   flash <- ControlsServer("controls", input, app_values)
 

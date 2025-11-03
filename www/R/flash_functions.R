@@ -111,8 +111,6 @@ flashcalc <- function(wav,
   peak <- create_peak(timeamp, synth, rm_flash, dif, quant)
   
   if (flashtype == "complex flash") {
-    # Find median time of each sound grouping (peak) and the difference them
-    peak <- create_peak(timeamp, synth, rm_flash, dif, quant)
     
     # create complex flash groupings
     peak <- peak %>% mutate(samegroup = ifelse(timediff < pause, 0, 1)) %>%
@@ -129,8 +127,21 @@ flashcalc <- function(wav,
     # get glow end times
     glowend <- timeamp %>% group_by(grouping) %>% summarise(end=max(Time))
     
-    # merge start and end times
-    glowtimes <- merge(glowstart, glowend, by = "grouping")
+    st_ends <- sort(c(glowstart$start, glowend$end, synth))
+    
+    if (length(rm_flash) > 0) {
+      for (i in rm_flash) {
+        st_ends <- st_ends[abs(st_ends - i) > dif]
+      }
+    }
+    gstarts = st_ends[c(TRUE, FALSE)]
+    gends = st_ends[c(FALSE, TRUE)]
+    if (length(gends) < length(gstarts)) {
+      gends = c(gends, NA)
+    }
+    glowtimes <- data.frame(grouping = 1:ceiling(length(st_ends)/2),
+                            start = gstarts,
+                            end = gends)
     
     # get time diff
     glowtimes$length <- glowtimes$end - glowtimes$start 
