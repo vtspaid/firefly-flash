@@ -19,10 +19,12 @@ details_text <- function() {
 
 flash_example <- "<b>1.</b> Select the example flash type to explore.
 <br><b>2.</b> Set The start and end times of the calculations on the left hand
-side bar and hit \"Run flash caluclations\".
-<br><b>3.</b> Play with the different inputs like 'amplitude', 'remove noise', and
-'add flash' to see how the results change. You can hover over these buttons to 
-see an explanation of what they do."
+side bar and hit \"Run flash calculations\".
+<br><b>3.</b> Play with the different inputs like 'amplitude', 'remove noise',
+to see how the results change. You can hover over these buttons to 
+see an explanation of what they do.
+<br><b>4.</b> single and double click on the results plot to add and remove 
+flashes."
 
 amplitude_text <- "This is the quantile of amplitude that is used to detect a
 flash. Increase it to be more selective and decreaese it to be more inclusive."
@@ -42,4 +44,5 @@ Otherwise they will be considered part of separate groups"
 flash_stats_text <- "Red lines represent single flashes. If the complex flash 
 method was chosen there will be red and blue lines representing groups of
 flashes. If glow method was chosen the green line represents the start of a 
-flash and the red line represents the end."
+flash and the red line represents the end. The plot is interactive.
+<b>Single clicks will add a flash and double clicks will remove a flash.</b>"

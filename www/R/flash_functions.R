@@ -63,9 +63,9 @@ create_peak <- function(timeamp, synth = NULL, rm_flash, dif, quant) {
   }
   
   if (length(synth > 0)) {
-    synth <- synth[purrr::map_vec(synth, 
+    synth2 <- synth[purrr::map_vec(synth, 
                                   function(x) !any(abs(x - peakTime) < dif))]
-    peakTime <- sort(c(peakTime, synth))
+    peakTime <- sort(c(peakTime, synth2))
   }
   
   if (length(rm_flash) > 0) {
@@ -99,7 +99,9 @@ flashcalc <- function(wav,
   amp <- get_amps(wav, start ,end) 
   
   dif <- (end - start) / 250
-  synth <- synth[synth > start & synth < end]
+  synth <- synth[synth >= start & synth <= end]
+  if (length(synth) == 0) synth <- NULL
+  if (all(is.na(synth))) synth <- NULL
   rm_flash <- rm_flash[rm_flash > start & rm_flash < end]
   # Create time array 
   timeArray <- ((0:(length(amp)-1)) / wav@samp.rate) + start

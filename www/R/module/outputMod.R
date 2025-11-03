@@ -4,7 +4,7 @@ OutputUI <- function(id) {
   tagList(
     h3("Results"),
     tableOutput(ns("flash_stats")),
-    flash_stats_text,
+    HTML(flash_stats_text),
     plotOutput(ns("resultsplot"), 
                click = ns("eg_click"),
                dblclick = ns("dblclick"),
