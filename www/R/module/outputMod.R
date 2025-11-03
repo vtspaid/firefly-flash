@@ -21,13 +21,7 @@ OutputServer <- function(id, input2, flash, app_values) {
                                    click_flashes = c(),
                                    rm_flashes = c(),
                                    data = NA)
-      
-      app_values2 <- reactiveValues(blank = c())
-      app_values2 <- reactiveValues(flashtype = "single flash",
-                                    tstart = 0,
-                                    tend = 30,
-                                    pause = 1,
-                                    quant = 0.999)
+
       
       observeEvent(input2[["controls-flash_calc"]], {
         req(flash())
@@ -59,11 +53,6 @@ OutputServer <- function(id, input2, flash, app_values) {
        }
         
         flash_data$flash <- flash
-        app_values2$tstart <- app_values$tstart
-        app_values2$tend <- app_values$tend
-        app_values2$pause <- app_values$pause
-        app_values2$quant <- app_values$quant
-        app_values2$flashtype <- app_values$flashtype
       })
       
       observeEvent(input$eg_click, {
@@ -91,11 +80,11 @@ OutputServer <- function(id, input2, flash, app_values) {
       observe({
         req(flash_data$flash)
         flash_data$data <- flashcalc(flash_data$flash,
-                                     start = app_values2$tstart,
-                                     end = app_values2$tend,
-                                     pause = app_values2$pause,
-                                     quant = app_values2$quant,
-                                     flashtype = app_values2$flashtype,
+                                     start = app_values$tstart,
+                                     end = app_values$tend,
+                                     pause = app_values$pause,
+                                     quant = app_values$quant,
+                                     flashtype = app_values$flashtype,
                                      synth = c(flash_data$new_flashes,
                                                flash_data$click_flashes),
                                      rm_flash = flash_data$rm_flashes

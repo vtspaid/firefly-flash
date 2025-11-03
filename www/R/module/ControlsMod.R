@@ -73,12 +73,13 @@ ControlsServer <- function(id, input2, app_values) {
         })
       })
       
-      observeEvent(input$flashtype, app_values$flashtype <- input$flashtype)
-      observeEvent(input$start, app_values$tstart <- input$start)
-      observeEvent(input$end, app_values$tend <- input$end)
-      observeEvent(input$quant, app_values$quant <- input$quant)
-      observeEvent(input$pause, app_values$pause <- input$pause)
-      observeEvent(input$frequency, app_values$freq <- input$freq)
+      observeEvent(input$flash_calc, {
+        app_values$flashtype <- input$flashtype
+        app_values$tstart <- input$start
+        app_values$tend <- input$end
+        app_values$quant <- input$quant
+        app_values$pause <- input$pause
+      })
       
       observeEvent(input$flashtype, {
         print("flashtype changed")
