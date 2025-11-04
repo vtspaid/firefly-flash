@@ -1,15 +1,48 @@
 
 OutputUI <- function(id) {
   ns <- NS(id)
+
   tagList(
+    # tags$script(HTML(sprintf("
+    #   $(document).on('mousemove', function(event) {
+    #     var mx = event.pageX;
+    #     var my = event.pageY;
+    #     Shiny.setInputValue('%s', {mx: mx, my: my}, {priority: 'event'});
+    #   });
+    # ", ns('mouse_loc')))),
     h3("Results"),
     tableOutput(ns("flash_stats")),
     HTML(flash_stats_text),
-    plotOutput(ns("resultsplot"), 
+    uiOutput(ns("popup")),
+    # tags$div(style = "position:relative;",
+    #          # plot has namespaced id so we can bind JS to it
+    #          plotOutput(ns("resultsplot"),
+    #                     hover = hoverOpts(id = ns("hover"),
+    #                                       delay = 10, delayType = "throttle"),
+    #                     height = "300px")
+    # ),
+    
+    plotOutput(ns("resultsplot"),
                click = ns("eg_click"),
                dblclick = ns("dblclick"),
-               height = "300px")
+               hover = ns("hover"),
+               height = "300px"),
+    tags$script(HTML(sprintf("
+      (function() {
+        var plotId = '%s';
+        // plot is rendered as a canvas inside the container with id = plotId
+        // use mousemove on the container so we can compute page coords easily
+        $(document).on('mousemove', '#' + plotId, function(e) {
+          Shiny.setInputValue('%s', { pageX: e.pageX, pageY: e.pageY }, {priority: 'event'});
+        });
+        // hide popup on mouseleave of the plot container
+        $(document).on('mouseleave', '#' + plotId, function(e) {
+          Shiny.setInputValue('%s', null, {priority: 'event'});
+        });
+      })();
+    ", ns("resultsplot"), ns("mouse_loc"), ns("mouse_loc"))))
   )
+  
 }
 
 OutputServer <- function(id, input2, flash, app_values) {
@@ -29,7 +62,8 @@ OutputServer <- function(id, input2, flash, app_values) {
         samprate <- flash()$audio@samp.rate
         flash_data$click_flashes <- c()
         flash_data$rm_flashes <- c()
-        
+          
+          
         # Remove noise
         if (app_values$countervalue > 0) {
           rm_times <- lapply(app_values$newvec, function(x) {
@@ -76,6 +110,50 @@ OutputServer <- function(id, input2, flash, app_values) {
           flash_data$rm_flashes <- c(flash_data$rm_flashes, input$dblclick$x)
         }
       })
+      
+      
+      observe({
+        # input$hover contains the data coordinates (x, y) and coords_css
+       # h <- input$hover
+        #m <- input$mouse_loc  # namespaced mouse coords {pageX, pageY} or NULL
+        if (is.null(input$hover) || is.null(input$mouse_loc)) {
+          output$popup <- renderUI(NULL)
+          return()
+        }
+        
+        # h$x is the data x value; m$pageX/m$pageY are page coordinates
+        px <- input$mouse_loc$pageX
+        py <- input$mouse_loc$pageY
+        
+        # create inline style with 'px' and pointer-events:none so it won't steal mouse events
+        style <- paste0("position:absolute; left:", px + 10, "px; top:", py + 10,
+                        "px; background:#fff; border:1px solid #999; padding:6px 8px; border-radius:4px; z-index:9999; pointer-events:none;")
+
+        output$popup <- renderUI({
+          div(style = style, paste0("x = ", round(input$hover$x, 4)))
+        })
+      })
+      
+      # observeEvent(input$hover, {
+      #    print("hover")
+      #   print(names(input$hover))
+      #   print(input$hover$x)
+      #     mx <- input$mouse_loc$mx # The mouse x position on the page
+      #     my <- input$mouse_loc$my # The mouse y position on the page
+      #     print(input$hover$coords_css$x)
+      #     print(input$hover$coords_css)
+      #     print(input$hover$coords_img)
+      #     print(my)
+      #     print(mx)
+      #     output$popup <- renderUI({
+      #       div(id = "popup", 
+      #           style = paste0("position:absolute; 
+      #                          top:", my - 75, "px;
+      #                          left: ", mx - 325, "px;"), 
+      #           round(input$hover$x, 2))
+      #     })
+      # })
+      
       
       observe({
         req(flash_data$flash)
