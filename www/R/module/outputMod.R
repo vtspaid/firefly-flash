@@ -3,44 +3,85 @@ OutputUI <- function(id) {
   ns <- NS(id)
 
   tagList(
-    # tags$script(HTML(sprintf("
-    #   $(document).on('mousemove', function(event) {
-    #     var mx = event.pageX;
-    #     var my = event.pageY;
-    #     Shiny.setInputValue('%s', {mx: mx, my: my}, {priority: 'event'});
-    #   });
-    # ", ns('mouse_loc')))),
     h3("Results"),
     tableOutput(ns("flash_stats")),
     HTML(flash_stats_text),
     uiOutput(ns("popup")),
-    # tags$div(style = "position:relative;",
-    #          # plot has namespaced id so we can bind JS to it
-    #          plotOutput(ns("resultsplot"),
-    #                     hover = hoverOpts(id = ns("hover"),
-    #                                       delay = 10, delayType = "throttle"),
-    #                     height = "300px")
-    # ),
+
+    tags$div(id = ns("plot_wrap"), style = "position:relative;",
+             plotOutput(ns("resultsplot"), 
+                        hover = hoverOpts(id = ns("plot_hover"), 
+                                          delay = 10, delayType = "throttle"),
+                        click = ns("eg_click"),
+                        dblclick = ns("dblclick"),
+                        height = "300px")
+    ),
     
-    plotOutput(ns("resultsplot"),
-               click = ns("eg_click"),
-               dblclick = ns("dblclick"),
-               hover = ns("hover"),
-               height = "300px"),
-    tags$script(HTML(sprintf("
-      (function() {
-        var plotId = '%s';
-        // plot is rendered as a canvas inside the container with id = plotId
-        // use mousemove on the container so we can compute page coords easily
-        $(document).on('mousemove', '#' + plotId, function(e) {
-          Shiny.setInputValue('%s', { pageX: e.pageX, pageY: e.pageY }, {priority: 'event'});
-        });
-        // hide popup on mouseleave of the plot container
-        $(document).on('mouseleave', '#' + plotId, function(e) {
-          Shiny.setInputValue('%s', null, {priority: 'event'});
-        });
-      })();
-    ", ns("resultsplot"), ns("mouse_loc"), ns("mouse_loc"))))
+  tags$script(HTML(sprintf("
+(function(){
+  var plotId = '%s';        // container id (div that holds the plotOutput)
+  var popupId = '%s';       // id for popup element
+
+  // create popup element if missing
+  if (!document.getElementById(popupId)) {
+    var p = document.createElement('div');
+    p.id = popupId;
+    p.style.position = 'absolute';
+    p.style.display = 'none';
+    p.style.background = '#fff';
+    p.style.border = '1px solid #999';
+    p.style.padding = '6px 8px';
+    p.style.borderRadius = '4px';
+    p.style.pointerEvents = 'none';
+    p.style.zIndex = 99999;
+    p.style.whiteSpace = 'nowrap';
+    document.body.appendChild(p);
+  }
+
+  // store last mouse page coords for smooth placement
+  var lastMouse = {pageX: 0, pageY: 0};
+
+  // mousemove on the plot container: remember mouse position
+  $(document).on('mousemove', '#' + plotId, function(e) {
+    lastMouse.pageX = e.pageX;
+    lastMouse.pageY = e.pageY;
+  });
+
+  // hide popup when leaving the plot container
+  $(document).on('mouseleave', '#' + plotId, function() {
+    var p = document.getElementById(popupId);
+    if (p) p.style.display = 'none';
+  });
+
+  // custom message handler to update text and show popup.
+  // msg should contain { text: '...', relX: <px>, relY: <px> }
+  Shiny.addCustomMessageHandler('hoverPopup_update', function(msg) {
+    var p = document.getElementById(popupId);
+    if (!p) return;
+    p.textContent = msg.text || '';
+    // compute page coordinates using plot container offset + rel coords (pixels inside plot)
+    var $plot = $('#' + plotId);
+    if ($plot.length) {
+      var off = $plot.offset();
+      var left = off.left + (msg.relX || 0) + 12;   // 12px gap from cursor
+      var top  = off.top  + (msg.relY || 0) + 12;
+      // clamp to viewport
+      var maxLeft = window.pageXOffset + document.documentElement.clientWidth - p.offsetWidth - 8;
+      var maxTop  = window.pageYOffset + document.documentElement.clientHeight - p.offsetHeight - 8;
+      left = Math.max(window.pageXOffset + 8, Math.min(left, maxLeft));
+      top  = Math.max(window.pageYOffset + 8, Math.min(top, maxTop));
+      p.style.left = left + 'px';
+      p.style.top  = top + 'px';
+      p.style.display = 'block';
+    } else {
+      // fallback: use last mouse page coords
+      p.style.left = (lastMouse.pageX + 12) + 'px';
+      p.style.top  = (lastMouse.pageY + 12) + 'px';
+      p.style.display = 'block';
+    }
+  });
+})();
+", ns("plot_wrap"), ns("hover_popup"))))
   )
   
 }
@@ -112,48 +153,23 @@ OutputServer <- function(id, input2, flash, app_values) {
       })
       
       
+      # observe hover; when present, send text + rel pixel coords to JS
       observe({
-        # input$hover contains the data coordinates (x, y) and coords_css
-       # h <- input$hover
-        #m <- input$mouse_loc  # namespaced mouse coords {pageX, pageY} or NULL
-        if (is.null(input$hover) || is.null(input$mouse_loc)) {
-          output$popup <- renderUI(NULL)
+        h <- input$plot_hover
+        if (is.null(h)) {
+          # hide by sending empty text (JS hides on mouseleave anyway)
+          session$sendCustomMessage("hoverPopup_update", list(text = "", 
+                                                              relX = NULL,
+                                                              relY = NULL))
           return()
         }
-        
-        # h$x is the data x value; m$pageX/m$pageY are page coordinates
-        px <- input$mouse_loc$pageX
-        py <- input$mouse_loc$pageY
-        
-        # create inline style with 'px' and pointer-events:none so it won't steal mouse events
-        style <- paste0("position:absolute; left:", px + 10, "px; top:", py + 10,
-                        "px; background:#fff; border:1px solid #999; padding:6px 8px; border-radius:4px; z-index:9999; pointer-events:none;")
-
-        output$popup <- renderUI({
-          div(style = style, paste0("x = ", round(input$hover$x, 4)))
-        })
+        # h$x is data x value, h$coords_css$x/y are pixels relative to the plot
+        txt <- paste0("x = ", signif(h$x, 4))
+        session$sendCustomMessage("hoverPopup_update",
+                                  list(text = txt, 
+                                       relX = h$coords_css$x, 
+                                       relY = h$coords_css$y))
       })
-      
-      # observeEvent(input$hover, {
-      #    print("hover")
-      #   print(names(input$hover))
-      #   print(input$hover$x)
-      #     mx <- input$mouse_loc$mx # The mouse x position on the page
-      #     my <- input$mouse_loc$my # The mouse y position on the page
-      #     print(input$hover$coords_css$x)
-      #     print(input$hover$coords_css)
-      #     print(input$hover$coords_img)
-      #     print(my)
-      #     print(mx)
-      #     output$popup <- renderUI({
-      #       div(id = "popup", 
-      #           style = paste0("position:absolute; 
-      #                          top:", my - 75, "px;
-      #                          left: ", mx - 325, "px;"), 
-      #           round(input$hover$x, 2))
-      #     })
-      # })
-      
       
       observe({
         req(flash_data$flash)
