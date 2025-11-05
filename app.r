@@ -5,6 +5,7 @@ library(tuneR)
 library(dplyr)
 library(base64enc)
 library(shinyjs)
+library(DT)
 
 # Source necessary scripts
 source("www/R/flash_functions.R")

@@ -4,7 +4,7 @@ OutputUI <- function(id) {
 
   tagList(
     h3("Results"),
-    tableOutput(ns("flash_stats")),
+    dataTableOutput(ns("flash_stats")),
     HTML(flash_stats_text),
     uiOutput(ns("popup")),
 
@@ -16,6 +16,13 @@ OutputUI <- function(id) {
                         dblclick = ns("dblclick"),
                         height = "300px")
     ),
+    fluidRow(column(1),
+             column(11,  
+                    div(class = "duration_slider",
+                        sliderInput(NS(id, "duration"), label = NULL,
+                                    min = 0, max = 100, value = c(0, 100),
+                                    step = 0.1,
+                                    width = "100%")))),
     
   tags$script(HTML(sprintf("
 (function(){
@@ -95,6 +102,7 @@ OutputServer <- function(id, input2, flash, app_values) {
                                    click_flashes = c(),
                                    rm_flashes = c(),
                                    data = NA)
+      flash_test <- reactiveValues(test = c())
 
       
       observeEvent(input2[["controls-flash_calc"]], {
@@ -127,29 +135,7 @@ OutputServer <- function(id, input2, flash, app_values) {
          )
        }
         
-        flash_data$flash <- flash
-      })
-      
-      observeEvent(input$eg_click, {
-        dist <- (app_values$tend - app_values$tstart) / 250
-        flash_data$click_flashes <-
-          flash_data$click_flashes[abs(flash_data$click_flashes -
-                                         input$eg_click$x) > dist]
-        
-        flash_data$click_flashes <- c(flash_data$click_flashes,
-                                      input$eg_click$x)
-        
-        close <- abs(flash_data$rm_flashes - input$eg_click$x) < dist
-        flash_data$rm_flashes <- flash_data$rm_flashes[!close]
-      })
-      
-      observeEvent(input$dblclick, {
-        dist <- (app_values$tend - app_values$tstart) / 250
-        close <- abs(flash_data$click_flashes - input$dblclick$x) < dist
-        flash_data$click_flashes <- flash_data$click_flashes[!close]
-        if(!any(close)) {
-          flash_data$rm_flashes <- c(flash_data$rm_flashes, input$dblclick$x)
-        }
+        flash_test$flash <- flash
       })
       
       
@@ -171,31 +157,53 @@ OutputServer <- function(id, input2, flash, app_values) {
                                        relY = h$coords_css$y))
       })
       
-      observe({
-        req(flash_data$flash)
-        flash_data$data <- flashcalc(flash_data$flash,
+      # Run flashcalc when button is pressed
+      observeEvent(input2[["controls-flash_calc"]], {
+        req(flash_test$flash)
+        tryCatch(
+        flash_data$data <- flashcalc(flash_test$flash,
                                      start = app_values$tstart,
                                      end = app_values$tend,
                                      pause = app_values$pause,
                                      quant = app_values$quant,
-                                     flashtype = app_values$flashtype,
-                                     synth = c(flash_data$new_flashes,
-                                               flash_data$click_flashes),
-                                     rm_flash = flash_data$rm_flashes
-        )
+                                     flashtype = app_values$flashtype)
+        , error = function(e) e)
+      })
+      
+      # Add flash
+      observeEvent(input$eg_click, {
+        dif = (input$duration[2] - input$duration[1]) / 250
+        flash_data$data <- add_flash(flash_data$data,
+                                     add = input$eg_click$x,
+                                     dif  = dif)
+      })
+      
+      # Remove flash
+      observeEvent(input$dblclick, {
+        dif = (input$duration[2] - input$duration[1]) / 250
+        flash_data$data <- rm_flash(flash_data$data,
+                                    rm = input$dblclick$x,
+                                    dif  = dif)
+      }) 
+      
+      observe({
+        updateNumericInput(session, "duration", 
+                           value = c(app_values$tstart, app_values$tend), 
+                           min = app_values$tstart, max = app_values$tend)
       })
 
       
-      output$flash_stats <- renderTable({
+      output$flash_stats <- renderDataTable({
         req(flash_data$data)
         input2[["controls-flash_calc"]]
-        isolate(flashcalc_df(flash_data$data))
-      })
+        mydt(flashcalc_df(flash_data$data), app_values$flashtype)
+      }, server = TRUE)
       
       output$resultsplot <- renderPlot({
         req(flash_data$data)
         input2[["controls-flash_calc"]]
-        isolate(flashcalc_plot(flash_data$data))
+        flashcalc_plot(flash_data$data, 
+                       xlims = c(input$duration[1], input$duration[2]))
       })
     }
   )
