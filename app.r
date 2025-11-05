@@ -13,7 +13,7 @@ source("www/R/example_text.R")
 source("www/R/module/examplemod.R")
 source("www/R/module/ControlsMod.R")
 source("www/R/module/ViewerMod.R")
-source("www/R/module/OutputMod.R")
+source("www/R/module/outputMod.R")
 
 addResourcePath("www", "www")
 
