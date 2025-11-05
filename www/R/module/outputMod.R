@@ -98,10 +98,7 @@ OutputServer <- function(id, input2, flash, app_values) {
     id,
     function(input, output, session) {
       
-      flash_data <- reactiveValues(new_flashes = c(),
-                                   click_flashes = c(),
-                                   rm_flashes = c(),
-                                   data = NA)
+      flash_data <- reactiveValues(data = NA)
       flash_test <- reactiveValues(test = c())
 
       
@@ -109,8 +106,6 @@ OutputServer <- function(id, input2, flash, app_values) {
         req(flash())
         flash <- flash()$audio
         samprate <- flash()$audio@samp.rate
-        flash_data$click_flashes <- c()
-        flash_data$rm_flashes <- c()
           
           
         # Remove noise
@@ -126,14 +121,7 @@ OutputServer <- function(id, input2, flash, app_values) {
                            (rm_times[[ii]]$end * samprate)] <- 0
           }
         }
-        
-        # Add flash
-        flash_data$new_flashes <- c()
-       if (app_values$addcounter > 0) {
-         flash_data$new_flashes <- sapply(app_values$flist, function(x)
-           input2[[paste0("controls-added", x)]]
-         )
-       }
+      
         
         flash_test$flash <- flash
       })

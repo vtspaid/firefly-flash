@@ -20,9 +20,9 @@ details_text <- function() {
 flash_example <- "<b>1.</b> Select the example flash type to explore.
 <br><b>2.</b> Set The start and end times of the calculations on the left hand
 side bar and hit \"Run flash calculations\".
-<br><b>3.</b> Play with the different inputs like 'amplitude', 'remove noise',
-to see how the results change. You can hover over these buttons to 
-see an explanation of what they do.
+<br><b>3.</b> Play with the different inputs like 'amplitude', and 
+'remove noise', to see how the results change. 
+You can hover over these buttons to see an explanation of what they do.
 <br><b>4.</b> single and double click on the results plot to add and remove 
 flashes."
 
@@ -33,9 +33,6 @@ rm_noise_text <- "Press this and select a time range to remove all noise from.
 Multiple time ranges can be selected by pressing this button multiple times.
 Useful for removing erroneuous flashes that can't be removed by changing the
 amplitude quantile"
-
-add_flash_text <- "If a flash is not being detected you can add a flash to a 
-specific time with this button. There is no limit to how many can be added."
 
 group_flash_text <- "This is the time difference used to dilineate groups. 
 Flashes that occur within this time are considered apart of the same group.
