@@ -107,7 +107,6 @@ OutputServer <- function(id, input2, flash, app_values) {
         flash <- flash()$audio
         samprate <- flash()$audio@samp.rate
           
-          
         # Remove noise
         if (app_values$countervalue > 0) {
           rm_times <- lapply(app_values$newvec, function(x) {
@@ -122,7 +121,6 @@ OutputServer <- function(id, input2, flash, app_values) {
           }
         }
       
-        
         flash_test$flash <- flash
       })
       
@@ -190,7 +188,7 @@ OutputServer <- function(id, input2, flash, app_values) {
       output$resultsplot <- renderPlot({
         req(flash_data$data)
         input2[["controls-flash_calc"]]
-        flashcalc_plot(flash_data$data, 
+        flashcalc_plot(flash_data$data,
                        xlims = c(input$duration[1], input$duration[2]))
       })
     }

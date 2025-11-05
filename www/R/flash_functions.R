@@ -104,10 +104,21 @@ rm_flash <- function(data, rm, dif = NULL) {
 
 
 # Create a plot from time_array and amp datasets
-flash_plot <- function(time_array, amp, xlims = NULL) {
+flash_plot <- function(time_array,
+                       amp,
+                       ymin = NULL,
+                       ymax = NULL, 
+                       xlims = NULL) {
 
   if (is.null(xlims)) xlims <- c(time_array[1], time_array[length(time_array)])
-
+  
+  if (!is.null(ymin)) {
+    yrange <- ymax - ymin
+    ylim_adj <- c(ymin - 0.02 * yrange, ymax + 0.02 * yrange)
+  } else {
+    ylim_adj <- c(min(amp, na.rm = TRUE), max(amp, na.rm = TRUE))
+  }
+  
   par(mar = c(3, 3, 1, 0), mgp = c(1.5, 0.5, 0))
   plot(x = time_array,
        y = amp,
@@ -115,10 +126,15 @@ flash_plot <- function(time_array, amp, xlims = NULL) {
        col = "black",
        xlab = "Seconds",
        ylab = "Amplitude",
-       xlim = xlims)
+       xlim = xlims,
+       ylim = ylim_adj)
 }
 
 mysegments <- function(peak, ymax, ymin, mycol) {
+  yrange <- ymax - ymin
+  expand <- 0.05 * yrange
+  ymax <- ymax + expand
+  ymin <- ymin - expand
   segments(x0 = peak, x1 = peak, y0 = ymax, y1 = ymin, col = mycol)
 }
 
@@ -177,20 +193,20 @@ flashcalc <- function(wav,
 
   # Create dataframe of time and amplitude
   timeamp <- create_timeamp(amp, time_array, quant, flashtype)
-
-  if (flashtype %in% c("single flash", "complex flash")) {
+  
+  if (flashtype %in% c("single flash", "complex flash") && quant != 1) {
     # Find median time of each sound grouping (peak) and the difference them
     peak <- create_peak(timeamp)
   } else {
     peak <- NULL
   }
 
-  if (flashtype == "complex flash") {
+  if (flashtype == "complex flash" && quant != 1) {
     # create complex flash groupings
     peak <- group_flashes(peak, pause)
   }
 
-  if (flashtype == "glow") {
+  if (flashtype == "glow" && quant != 1) {
     # get glow start times
     glowstart <- timeamp %>% group_by(grouping) %>% summarise(start = min(Time))
 
@@ -219,6 +235,15 @@ flashcalc <- function(wav,
 }
 
 flashcalc_df <- function(peak) {
+  if (peak$flashtype %in% c("single flash", "complex flash") &&
+      is.null(peak$peak)) {
+    peak$peak <- data.frame(timediff = NA, grouping = NA)
+  }
+  
+  if (peak$flashtype == "glow" && is.null(peak$glowtime)) {
+    peak$glowtimes <- data.frame(pause = NA, length = NA)
+  }
+  
   if (peak$flashtype == "single flash") {
     sd <- sd(peak$peak$timediff[2:length(peak$peak$timediff)])
     data1 <- data.frame("Mean" = mean(peak$peak$timediff[-1]),
@@ -270,7 +295,7 @@ flashcalc_df <- function(peak) {
 }
 
 flashcalc_plot <- function(data, xlims = NULL) {
-  flash_plot(data$time_array, data$amp, xlims)
+  flash_plot(data$time_array, data$amp, data$ampmin, data$ampmax, xlims)
   if (data$flashtype == "complex flash") {
     flashtime <- data$peak$peak_time
     mycols <- rep(c("blue", "red"),
@@ -283,7 +308,9 @@ flashcalc_plot <- function(data, xlims = NULL) {
     flashtime <- c(data$glowtimes$start, data$glowtimes$end)
     mycols <- rep(c("green", "red"), each = length(flashtime) / 2)
   }
-  mysegments(flashtime, data$ampmax, data$ampmin, mycols)
+  if (!is.null(flashtime)) {
+    mysegments(flashtime, data$ampmax, data$ampmin, mycols)
+  }
 }
 
 
