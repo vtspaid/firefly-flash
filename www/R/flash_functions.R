@@ -120,8 +120,8 @@ flash_plot <- function(time_array,
   }
   
   par(mar = c(3, 3, 1, 0), mgp = c(1.5, 0.5, 0))
-  plot(x = time_array,
-       y = amp,
+  plot(x = time_array[c(FALSE, TRUE)],
+       y = amp[c(FALSE, TRUE)],
        type = "l",
        col = "black",
        xlab = "Seconds",

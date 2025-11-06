@@ -126,22 +126,22 @@ OutputServer <- function(id, input2, flash, app_values) {
       
       
       # observe hover; when present, send text + rel pixel coords to JS
-      observe({
-        h <- input$plot_hover
-        if (is.null(h)) {
-          # hide by sending empty text (JS hides on mouseleave anyway)
-          session$sendCustomMessage("hoverPopup_update", list(text = "", 
-                                                              relX = NULL,
-                                                              relY = NULL))
-          return()
-        }
-        # h$x is data x value, h$coords_css$x/y are pixels relative to the plot
-        txt <- paste0("x = ", signif(h$x, 4))
-        session$sendCustomMessage("hoverPopup_update",
-                                  list(text = txt, 
-                                       relX = h$coords_css$x, 
-                                       relY = h$coords_css$y))
-      })
+      # observe({
+      #   h <- input$plot_hover
+      #   if (is.null(h)) {
+      #     # hide by sending empty text (JS hides on mouseleave anyway)
+      #     session$sendCustomMessage("hoverPopup_update", list(text = "", 
+      #                                                         relX = NULL,
+      #                                                         relY = NULL))
+      #     return()
+      #   }
+      #   # h$x is data x value, h$coords_css$x/y are pixels relative to the plot
+      #   txt <- paste0("x = ", signif(h$x, 4))
+      #   session$sendCustomMessage("hoverPopup_update",
+      #                             list(text = txt, 
+      #                                  relX = h$coords_css$x, 
+      #                                  relY = h$coords_css$y))
+      # })
       
       # Run flashcalc when button is pressed
       observeEvent(input2[["controls-flash_calc"]], {
