@@ -59,7 +59,7 @@ ExampleServer <- function(id, input2) {
       req(flash())
       train_audio <- flash()$audio
       timeArray <- (0:(length(train_audio@left) - 1)) / train_audio@samp.rate
-      flash_plot(timeArray, train_audio@left, input$duration)
+      flash_plot(timeArray, train_audio@left, xlims = input$duration)
     })
     
     flash

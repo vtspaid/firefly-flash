@@ -5,14 +5,15 @@ library(tuneR)
 library(dplyr)
 library(base64enc)
 library(shinyjs)
+library(DT)
 
 # Source necessary scripts
 source("www/R/flash_functions.R")
 source("www/R/example_text.R")
-source("www/R/module/ViewerMod.R")
-source("www/R/module/ControlsMod.R")
-source("www/R/module/outputMod.R")
 source("www/R/module/examplemod.R")
+source("www/R/module/ControlsMod.R")
+source("www/R/module/ViewerMod.R")
+source("www/R/module/outputMod.R")
 
 addResourcePath("www", "www")
 
@@ -68,8 +69,7 @@ server <- function(input, output, session) {
                                tstart = 0,
                                tend = 30,
                                pause = 1,
-                               quant = 0.999,
-                               freq = 9)
+                               quant = 0.999)
 
   flash <- ControlsServer("controls", input, app_values)
 

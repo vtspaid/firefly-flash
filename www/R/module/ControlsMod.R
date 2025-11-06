@@ -33,9 +33,6 @@ ControlsUI <- function(id) {
     tags$div(title = rm_noise_text,
              actionButton(ns("cancelnoise"), "remove noise")),
     br(),
-    tags$div(title = add_flash_text,
-             actionButton(ns("addflash"), "add flash/noise")),
-    br(),
     actionButton(ns("flash_calc"), "Run flash calculations",
                  style = "font-weight: bold; font-size:120%"))
   
@@ -73,12 +70,13 @@ ControlsServer <- function(id, input2, app_values) {
         })
       })
       
-      observeEvent(input$flashtype, app_values$flashtype <- input$flashtype)
-      observeEvent(input$start, app_values$tstart <- input$start)
-      observeEvent(input$end, app_values$tend <- input$end)
-      observeEvent(input$quant, app_values$quant <- input$quant)
-      observeEvent(input$pause, app_values$pause <- input$pause)
-      observeEvent(input$frequency, app_values$freq <- input$freq)
+      observeEvent(input$flash_calc, {
+        app_values$flashtype <- input$flashtype
+        app_values$tstart <- input$start
+        app_values$tend <- input$end
+        app_values$quant <- input$quant
+        app_values$pause <- input$pause
+      })
       
       observeEvent(input$flashtype, {
         print("flashtype changed")
@@ -138,42 +136,6 @@ ControlsServer <- function(id, input2, app_values) {
           observeEvent(input[[paste0("rmn_", i)]], {
             removeUI(selector = paste0("#removerow_", i), multiple = TRUE)
             app_values$newvec <- app_values$newvec[app_values$newvec != i]
-          }, ignoreInit = TRUE)
-        })
-      })
-      
-      # insert numeric inputs to add noise
-      observeEvent(input$addflash, {
-        req(input$addflash)
-        app_values$addcounter <- app_values$addcounter + 1
-        app_values$flist <- c(app_values$flist, app_values$addcounter)
-        num1 <- app_values$addcounter
-        insertUI(selector = paste0("#", id, "-addflash"), 
-                 where = "afterEnd",
-                 ui = tags$div(id = paste0("-flashadd", num1), 
-                               class = "inline",
-                               column(10, 
-                                      numericInput(ns(paste0("added", num1)), 
-                                            "Time:", 
-                                            value = NA, 
-                                            min = 0, 
-                                            max = 1000)),
-                               column(1, 
-                                      tags$div(
-                                        title = "remove row",
-                                      actionButton(paste0(ns("rma_"), num1),
-                                                   NULL,
-                                                   icon = icon("times"),
-                                                   class = "rm_btn")),
-                               )))
-      })
-      
-      # Remove the additional UI
-      observe({
-        purrr::walk(app_values$flist, function(i) {
-          observeEvent(input[[paste0("rma_", i)]], {
-            removeUI(selector = paste0("#-flashadd", i), multiple = TRUE)
-            app_values$flist <- app_values$flist[app_values$flist != i]
           }, ignoreInit = TRUE)
         })
       })

@@ -8,7 +8,7 @@ ViewerUI <- function(id) {
                     div(class = "duration_slider",
                         sliderInput(NS(id, "duration"), label = NULL,
                                     min = 0, max = 100, value = c(0, 100),
-                                    widt = "100%"))))
+                                    width = "100%"))))
   )
 }
 
@@ -28,7 +28,7 @@ ViewerServer <- function(id, flash) {
         train_audio <- flash()$audio
         timeArray <- (0:(length(train_audio@left) - 1)) / train_audio@samp.rate
         # Plot the wave
-        flash_plot(timeArray, train_audio@left, input$duration)
+        flash_plot(timeArray, train_audio@left, xlims = input$duration)
     })
   })
 }
